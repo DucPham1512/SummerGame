@@ -1,0 +1,20 @@
+trigger:
+  branches:
+    include:
+      - develop
+
+pr:
+  branches:
+    include:
+      - develop
+
+pool:
+  vmImage: ubuntu-latest
+
+container: barichello/godot-ci:4.6.3
+
+steps:
+  - checkout: self
+
+  - script: godot -v --headless --import --path .
+    displayName: 'Import project (headless)'
