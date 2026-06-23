@@ -1,0 +1,12 @@
+{
+  "modes": {
+    "one_v_one": {
+      "starting_hp": 50,
+      "starting_cp": 1,
+      "deck_size": 17,
+      "starting_hand_size": 4,
+      "time_pool_seconds": 600
+    }
+  },
+  "max_dice_rolls": 3
+}
