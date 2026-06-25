@@ -1,0 +1,121 @@
+[gd_scene format=3 uid="uid://blw44ilh7rqct"]
+
+[ext_resource type="Script" uid="uid://gersl5n5nm6y" path="res://scenes/common/main_client.gd" id="1_jiraw"]
+[ext_resource type="Texture2D" uid="uid://chv5uq37todp2" path="res://icon.svg" id="2_85gpl"]
+[ext_resource type="PackedScene" uid="uid://ex3wvhm7mxxc" path="res://scenes/home/home.tscn" id="2_jiraw"]
+[ext_resource type="PackedScene" uid="uid://cab8jmtvbewyo" path="res://scenes/profile/profile.tscn" id="3_itmfa"]
+[ext_resource type="PackedScene" uid="uid://b4houakmpsuyd" path="res://scenes/card_codex/char_codex.tscn" id="4_jm3f6"]
+[ext_resource type="PackedScene" uid="uid://bam1gpqfg3nvb" path="res://scenes/char_codex/card_codex.tscn" id="5_a8dql"]
+[ext_resource type="PackedScene" uid="uid://cs8befsefahtx" path="res://scenes/lobby/lobby.tscn" id="6_a8dql"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k3aaf"]
+bg_color = Color(0, 0, 0, 0.78039217)
+
+[node name="Main" type="Control" unique_id=1111163766]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_jiraw")
+HomePage = ExtResource("2_jiraw")
+ProfilePage = ExtResource("3_itmfa")
+CharCodexPage = ExtResource("4_jm3f6")
+CardCodex = ExtResource("5_a8dql")
+Lobby = ExtResource("6_a8dql")
+
+[node name="NavigationBar" type="Panel" parent="." unique_id=596483935]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 112.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_k3aaf")
+
+[node name="ProfileButton" type="TextureButton" parent="NavigationBar" unique_id=35329276]
+clip_contents = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 84.0
+offset_bottom = 84.0
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="HBoxContainer" type="HBoxContainer" parent="NavigationBar" unique_id=1648082893]
+layout_mode = 0
+offset_left = 768.0
+offset_top = 24.0
+offset_right = 1128.0
+offset_bottom = 88.0
+theme_override_constants/separation = 15
+
+[node name="HomeButton" type="TextureButton" parent="NavigationBar/HBoxContainer" unique_id=627517360]
+clip_contents = true
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="MatchHistoryButton" type="TextureButton" parent="NavigationBar/HBoxContainer" unique_id=1539981809]
+clip_contents = true
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="CharCodexButton" type="TextureButton" parent="NavigationBar/HBoxContainer" unique_id=1141084356]
+clip_contents = true
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="CardCodexButton" type="TextureButton" parent="NavigationBar/HBoxContainer" unique_id=1111236739]
+clip_contents = true
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="Setting" type="TextureButton" parent="NavigationBar/HBoxContainer" unique_id=2144301036]
+clip_contents = true
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("2_85gpl")
+ignore_texture_size = true
+
+[node name="Label" type="Label" parent="NavigationBar" unique_id=1772870661]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 32.0
+offset_right = 320.0
+offset_bottom = 56.0
+text = "Username"
+
+[node name="Label2" type="Label" parent="NavigationBar" unique_id=258151452]
+layout_mode = 0
+offset_left = 96.0
+offset_top = 56.0
+offset_right = 320.0
+offset_bottom = 79.0
+text = "ID: "
+
+[node name="ContentContainer" type="Control" parent="." unique_id=35141277]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 112.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[connection signal="button_down" from="NavigationBar/ProfileButton" to="." method="_on_profile_button_button_down"]
+[connection signal="button_down" from="NavigationBar/HBoxContainer/HomeButton" to="." method="_on_home_button_button_down"]
+[connection signal="button_down" from="NavigationBar/HBoxContainer/CharCodexButton" to="." method="_on_char_codex_button_button_down"]
+[connection signal="button_down" from="NavigationBar/HBoxContainer/CardCodexButton" to="." method="_on_card_codex_button_button_down"]

@@ -11,8 +11,14 @@ config_version=5
 [application]
 
 config/name="SummerGame"
+run/main_scene="uid://bln00ggcti6w0"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+SceneManager="*uid://c3yqbog81m85w"
+EventBus="*uid://dr3sea81iag3x"
 
 [physics]
 

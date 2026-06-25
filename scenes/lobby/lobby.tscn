@@ -1,0 +1,80 @@
+[gd_scene format=3 uid="uid://cs8befsefahtx"]
+
+[ext_resource type="Script" uid="uid://dgme2ovo0nt6o" path="res://scenes/lobby/lobby.gd" id="1_1ig7j"]
+[ext_resource type="PackedScene" uid="uid://cv7m0s18p2nn0" path="res://scenes/char_selection/char_selection.tscn" id="2_ukx7c"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_afprr"]
+font_size = 50
+
+[node name="Lobby" type="Control" unique_id=1872066760]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_1ig7j")
+CharSelection = ExtResource("2_ukx7c")
+
+[node name="Label" type="Label" parent="." unique_id=851312957]
+layout_mode = 0
+offset_left = 344.0
+offset_top = 64.0
+offset_right = 792.0
+offset_bottom = 133.0
+text = "Lobby"
+label_settings = SubResource("LabelSettings_afprr")
+horizontal_alignment = 1
+
+[node name="Find Match" type="Button" parent="." unique_id=1159327212]
+layout_mode = 0
+offset_left = 424.0
+offset_top = 360.0
+offset_right = 712.0
+offset_bottom = 472.0
+theme_override_font_sizes/font_size = 30
+text = "Find Match"
+
+[node name="MatchConfirmation" type="Panel" parent="." unique_id=1989487540]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -148.0
+offset_top = -204.0
+offset_right = 148.0
+offset_bottom = 204.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Accept" type="Button" parent="MatchConfirmation" unique_id=1747726507]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -39.0
+offset_top = 72.0
+offset_right = 34.0
+offset_bottom = 108.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "Accept"
+
+[node name="Decline" type="Button" parent="MatchConfirmation" unique_id=845736659]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -36.5
+offset_top = 171.0
+offset_right = 36.5
+offset_bottom = 207.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 20
+text = "Decline"
+
+[connection signal="button_down" from="Find Match" to="." method="_on_find_match_button_down"]
+[connection signal="button_down" from="MatchConfirmation/Accept" to="." method="_on_accept_button_down"]
+[connection signal="button_down" from="MatchConfirmation/Decline" to="." method="_on_decline_button_down"]

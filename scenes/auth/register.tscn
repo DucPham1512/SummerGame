@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://bln00ggcti6w0"]
+
+[ext_resource type="Script" uid="uid://cg4fxefhsehgr" path="res://scenes/auth/register_window.gd" id="1_cbfdm"]
+[ext_resource type="PackedScene" uid="uid://blw44ilh7rqct" path="res://scenes/common/main_client.tscn" id="2_ihx5i"]
+
+[node name="Register" type="Control" unique_id=23222458]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Register Window" type="Panel" parent="." unique_id=1565361681]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -229.0
+offset_top = -230.0
+offset_right = 229.0
+offset_bottom = 290.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_cbfdm")
+MainWindow = ExtResource("2_ihx5i")
+
+[node name="DisplayNameLabel" type="RichTextLabel" parent="Register Window" unique_id=121805931]
+layout_mode = 0
+offset_right = 244.0
+offset_bottom = 40.0
+text = "In-game Name"
+
+[node name="InGameNameInput" type="TextEdit" parent="Register Window" unique_id=578032761]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 31.0
+offset_right = 171.0
+offset_bottom = 64.0
+
+[node name="UsernameLabel" type="RichTextLabel" parent="Register Window" unique_id=1210637618]
+layout_mode = 0
+offset_left = 3.0
+offset_top = 87.0
+offset_right = 247.0
+offset_bottom = 127.0
+text = "Username"
+
+[node name="UsernameInput" type="TextEdit" parent="Register Window" unique_id=139793826]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 130.0
+offset_right = 172.0
+offset_bottom = 163.0
+
+[node name="PasswordLabel" type="RichTextLabel" parent="Register Window" unique_id=1642412512]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 186.0
+offset_right = 248.0
+offset_bottom = 226.0
+text = "Password"
+
+[node name="PasswordInput" type="TextEdit" parent="Register Window" unique_id=1200775268]
+layout_mode = 0
+offset_left = 7.0
+offset_top = 228.0
+offset_right = 171.0
+offset_bottom = 261.0
+
+[node name="RepeatPasswordLabel" type="RichTextLabel" parent="Register Window" unique_id=457265088]
+layout_mode = 0
+offset_left = 2.0
+offset_top = 273.0
+offset_right = 246.0
+offset_bottom = 313.0
+text = "Repeat Password"
+
+[node name="RepeatPasswordInput" type="TextEdit" parent="Register Window" unique_id=1852660344]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 322.0
+offset_right = 174.0
+offset_bottom = 355.0
+
+[node name="RegisterButton" type="Button" parent="Register Window" unique_id=849771419]
+layout_mode = 0
+offset_left = 83.0
+offset_top = 391.0
+offset_right = 362.0
+offset_bottom = 448.0
+text = "Register"
+
+[node name="ReturnToLoginButton" type="LinkButton" parent="Register Window" unique_id=1526893277]
+layout_mode = 0
+offset_left = 86.0
+offset_top = 458.0
+offset_right = 363.0
+offset_bottom = 498.0
+text = "Login"
+
+[connection signal="button_down" from="Register Window/RegisterButton" to="Register Window" method="_on_register_button_button_down"]

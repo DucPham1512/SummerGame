@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://ex3wvhm7mxxc"]
+
+[ext_resource type="Script" uid="uid://comwfuwx24iqa" path="res://scenes/home/home.gd" id="1_5q1ba"]
+[ext_resource type="PackedScene" uid="uid://cs8befsefahtx" path="res://scenes/lobby/lobby.tscn" id="2_ng36q"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_8ubld"]
+bg_color = Color(0.006466694, 0.006466698, 0.0064666914, 1)
+
+[node name="HomePage" type="Control" unique_id=629205405]
+layout_mode = 3
+anchor_top = 0.16049382
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_5q1ba")
+Lobby = ExtResource("2_ng36q")
+
+[node name="Panel" type="Panel" parent="." unique_id=1807656818]
+layout_mode = 1
+
+[node name="PlayButton" type="Button" parent="Panel" unique_id=2141722539]
+layout_mode = 0
+offset_left = 448.0
+offset_top = 168.0
+offset_right = 680.0
+offset_bottom = 240.0
+theme_override_colors/font_color = Color(0.875, 0.875, 0.875, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_8ubld")
+text = "Play"
+
+[connection signal="button_down" from="Panel/PlayButton" to="." method="_on_play_button_button_down"]
