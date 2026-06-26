@@ -1,0 +1,18 @@
+{
+  "_schema": "character",
+  "_notes": "Static catalogue of playable characters. Loaded from JSON at runtime. 'id' is a stable string key used to reference this character from abilities, dice, companions, and character_status_effect, and to dispatch character-specific behaviour in code.",
+  "characters": [
+    {
+      "id": "tactician",
+      "name": "Tactician",
+      "description": "Military genius of the Empire.",
+      "is_active": true
+    },
+    {
+      "id": "huntress",
+      "name": "Huntress",
+      "description": "Dealiest hunter from the Green.",
+      "is_active": true
+    }
+  ]
+}

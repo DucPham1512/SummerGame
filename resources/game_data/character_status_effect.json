@@ -1,0 +1,12 @@
+{
+  "_schema": "character_status_effect",
+  "_notes": "Junction defining which status effects belong to which character's kit. Static data, loaded from JSON at runtime. Defines the CATALOGUE association (which character's kit the effect originates from), not who the effect can land on at runtime, and not the runtime state of active effects during a match. Both fields are string references: 'character_id' -> character.id, 'status_effect_id' -> status_effect.id.",
+  "character_status_effects": [
+    { "character_id": "tactician", "status_effect_id": "tactical_advantage" },
+    { "character_id": "tactician", "status_effect_id": "constrict" },
+    { "character_id": "tactician", "status_effect_id": "targeted" },
+    { "character_id": "tactician", "status_effect_id": "protect" },
+    { "character_id": "huntress", "status_effect_id": "nyras_bond" },
+    { "character_id": "huntress", "status_effect_id": "bleed" }
+  ]
+}
