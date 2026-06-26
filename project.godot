@@ -8,6 +8,12 @@
 
 config_version=5
 
+[GD-Sync]
+
+version="1.0"
+publicKey="275bc25f474fb2bb"
+privateKey="466b8217459f9879"
+
 [application]
 
 config/name="SummerGame"
@@ -19,6 +25,11 @@ config/icon="res://icon.svg"
 
 SceneManager="*uid://c3yqbog81m85w"
 EventBus="*uid://dr3sea81iag3x"
+GDSync="*uid://c306hv827sb1i"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/GD-Sync/plugin.cfg")
 
 [physics]
 
