@@ -1,0 +1,93 @@
+[gd_scene format=3 uid="uid://5q8e7bgj4h3q"]
+
+[ext_resource type="Script" uid="uid://cwhregldke8wr" path="res://scenes/auth/login.gd" id="1_8wugm"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_cpvdj"]
+bg_color = Color(0.14901961, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Login" type="Control" unique_id=23222458]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8wugm")
+
+[node name="LoginWindow" type="Panel" parent="." unique_id=1565361681]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -229.0
+offset_top = -120.0
+offset_right = 229.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_cpvdj")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="LoginWindow" unique_id=1414597426]
+custom_minimum_size = Vector2(60, 30)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -183.5
+offset_top = -70.0
+offset_right = 183.5
+offset_bottom = 70.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MailContainer" type="HBoxContainer" parent="LoginWindow/VBoxContainer" unique_id=1859349679]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="MailLabel" type="RichTextLabel" parent="LoginWindow/VBoxContainer/MailContainer" unique_id=1210637618]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "E-Mail
+"
+
+[node name="MailInput" type="LineEdit" parent="LoginWindow/VBoxContainer/MailContainer" unique_id=169133386]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PasswordContainer" type="HBoxContainer" parent="LoginWindow/VBoxContainer" unique_id=393115843]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="PasswordLabel" type="RichTextLabel" parent="LoginWindow/VBoxContainer/PasswordContainer" unique_id=1642412512]
+custom_minimum_size = Vector2(100, 30)
+layout_mode = 2
+text = "Password"
+
+[node name="PasswordInput" type="LineEdit" parent="LoginWindow/VBoxContainer/PasswordContainer" unique_id=1738407450]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LoginButton" type="Button" parent="LoginWindow/VBoxContainer" unique_id=849771419]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Login
+"
+
+[node name="RegisterContainer" type="CenterContainer" parent="LoginWindow/VBoxContainer" unique_id=2118378501]
+layout_mode = 2
+
+[node name="ToRegisterButton" type="LinkButton" parent="LoginWindow/VBoxContainer/RegisterContainer" unique_id=1526893277]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Register"
+
+[connection signal="pressed" from="LoginWindow/VBoxContainer/LoginButton" to="." method="_on_login_button_pressed"]
+[connection signal="pressed" from="LoginWindow/VBoxContainer/RegisterContainer/ToRegisterButton" to="." method="_on_to_register_button_pressed"]
