@@ -17,7 +17,7 @@ privateKey="466b8217459f9879"
 [application]
 
 config/name="SummerGame"
-run/main_scene="uid://bln00ggcti6w0"
+run/main_scene="uid://b5hrrprcs55gt"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
@@ -26,6 +26,7 @@ config/icon="res://icon.svg"
 SceneManager="*uid://c3yqbog81m85w"
 EventBus="*uid://dr3sea81iag3x"
 GDSync="*uid://c306hv827sb1i"
+Util="*uid://bwlc0uulee8iy"
 
 [editor_plugins]
 
