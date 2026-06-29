@@ -5,6 +5,7 @@ extends Control
 @export var CharCodexPage : PackedScene
 @export var CardCodex : PackedScene
 @export var Lobby : PackedScene
+@export var Setting : PackedScene
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
@@ -14,10 +15,7 @@ func _ready() -> void:
 	else:
 		EventBus.new_match = false
 		SceneManager.load_scene(Lobby)
-	
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
+
 
 func _on_profile_button_button_down() -> void:
 	SceneManager.load_scene(ProfilePage)
@@ -36,3 +34,6 @@ func _on_card_codex_button_button_down() -> void:
 
 func _on_new_match_signal() -> void:
 	SceneManager.load_scene(Lobby)
+	
+func _on_setting_button_down() -> void:
+	SceneManager.load_scene(Setting)

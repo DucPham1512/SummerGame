@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://b4houakmpsuyd" path="res://scenes/card_codex/char_codex.tscn" id="4_jm3f6"]
 [ext_resource type="PackedScene" uid="uid://bam1gpqfg3nvb" path="res://scenes/char_codex/card_codex.tscn" id="5_a8dql"]
 [ext_resource type="PackedScene" uid="uid://cs8befsefahtx" path="res://scenes/lobby/lobby.tscn" id="6_a8dql"]
+[ext_resource type="PackedScene" uid="uid://bjtfihb5gxy08" path="res://scenes/settings/setting.tscn" id="7_jquwr"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k3aaf"]
 bg_color = Color(0, 0, 0, 0.78039217)
@@ -25,6 +26,7 @@ ProfilePage = ExtResource("3_itmfa")
 CharCodexPage = ExtResource("4_jm3f6")
 CardCodex = ExtResource("5_a8dql")
 Lobby = ExtResource("6_a8dql")
+Setting = ExtResource("7_jquwr")
 
 [node name="NavigationBar" type="Panel" parent="." unique_id=596483935]
 layout_mode = 0
@@ -119,3 +121,4 @@ grow_vertical = 2
 [connection signal="button_down" from="NavigationBar/HBoxContainer/HomeButton" to="." method="_on_home_button_button_down"]
 [connection signal="button_down" from="NavigationBar/HBoxContainer/CharCodexButton" to="." method="_on_char_codex_button_button_down"]
 [connection signal="button_down" from="NavigationBar/HBoxContainer/CardCodexButton" to="." method="_on_card_codex_button_button_down"]
+[connection signal="button_down" from="NavigationBar/HBoxContainer/Setting" to="." method="_on_setting_button_down"]

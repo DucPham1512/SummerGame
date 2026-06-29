@@ -1,0 +1,92 @@
+[gd_scene format=3 uid="uid://bjtfihb5gxy08"]
+
+[ext_resource type="Script" uid="uid://clnpb1ygrwkcm" path="res://scenes/settings/setting.gd" id="1_rq5r6"]
+[ext_resource type="PackedScene" uid="uid://1bmlfrhcx2rj" path="res://scenes/common/volume_slider.tscn" id="2_f43yf"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f43yf"]
+bg_color = Color(0.14901961, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Setting" type="Control" unique_id=1446489594]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 104.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_rq5r6")
+
+[node name="VolumeControlPanel" type="Panel" parent="." unique_id=1739346911]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -108.0
+offset_right = 128.0
+offset_bottom = 108.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f43yf")
+
+[node name="VolumeContainer" type="VBoxContainer" parent="VolumeControlPanel" unique_id=1081526749]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -89.5
+offset_top = -68.5
+offset_right = 89.5
+offset_bottom = 68.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MasterLabel" type="Label" parent="VolumeControlPanel/VolumeContainer" unique_id=391183616]
+layout_mode = 2
+text = "Master Volume"
+
+[node name="MasterVolume" parent="VolumeControlPanel/VolumeContainer" unique_id=1569043429 instance=ExtResource("2_f43yf")]
+layout_mode = 2
+size_flags_horizontal = 3
+bus_name = "Master"
+
+[node name="MusicLabel" type="Label" parent="VolumeControlPanel/VolumeContainer" unique_id=638393576]
+layout_mode = 2
+text = "Master Volume"
+
+[node name="MusicVolume" parent="VolumeControlPanel/VolumeContainer" unique_id=1560861981 instance=ExtResource("2_f43yf")]
+layout_mode = 2
+bus_name = "Music"
+
+[node name="SFXLabel" type="Label" parent="VolumeControlPanel/VolumeContainer" unique_id=1810879123]
+layout_mode = 2
+text = "Master Volume"
+
+[node name="SFXVolume" parent="VolumeControlPanel/VolumeContainer" unique_id=2054469098 instance=ExtResource("2_f43yf")]
+layout_mode = 2
+bus_name = "SFX"
+
+[node name="LogoutButton" type="Button" parent="." unique_id=1024392678]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -224.0
+offset_top = -88.0
+offset_right = -64.0
+offset_bottom = -40.0
+grow_horizontal = 0
+grow_vertical = 0
+text = "Logout"
+
+[connection signal="pressed" from="LogoutButton" to="." method="_on_logout_button_pressed"]
