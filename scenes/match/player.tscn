@@ -2,6 +2,35 @@
 
 [ext_resource type="Script" uid="uid://0da0mme4de85" path="res://scenes/match/player.gd" id="1_6wsa6"]
 [ext_resource type="PackedScene" uid="uid://ihku1ecf4lbu" path="res://scenes/match/components/health_bar/health_bar.tscn" id="2_tc2cx"]
+[ext_resource type="PackedScene" uid="uid://c2ku853dw1scn" path="res://scenes/match/components/cp_bar/cp_bar.tscn" id="3_l255k"]
+[ext_resource type="Shader" uid="uid://d2uvrmpom4at5" path="res://assets/shader/segmented_bar.gdshader" id="4_k7uam"]
+
+[sub_resource type="Gradient" id="Gradient_ml4b2"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.3, 0.67, 1, 1, 0.04, 0.5, 0.9, 1, 0.14901961, 0.3882353, 0.9137255, 1)
+metadata/_snap_enabled = true
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_t3iw6"]
+gradient = SubResource("Gradient_ml4b2")
+
+[sub_resource type="Gradient" id="Gradient_y"]
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_y"]
+gradient = SubResource("Gradient_y")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_k7uam"]
+resource_local_to_scene = true
+shader = ExtResource("4_k7uam")
+shader_parameter/stepify = true
+shader_parameter/value = 1.0
+shader_parameter/count = 15
+shader_parameter/margin = Vector2(0.15, 0.2)
+shader_parameter/shear_angle = -0.04299995454250005
+shader_parameter/gradient_x = SubResource("GradientTexture1D_t3iw6")
+shader_parameter/gradient_y = SubResource("GradientTexture1D_y")
+shader_parameter/use_value_gradient = false
+shader_parameter/invert = false
 
 [node name="Player" type="Control" unique_id=595356113]
 layout_mode = 3
@@ -16,25 +45,54 @@ layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
-offset_top = -104.0
-offset_bottom = 0.0
+offset_top = -112.0
+offset_bottom = -8.0
 grow_vertical = 0
+texture_progress_offset = Vector2(53, 24)
 player = NodePath("..")
 
-[node name="TestHp" type="Button" parent="." unique_id=552300344]
+[node name="DecreaseHp" type="Button" parent="." unique_id=552300344]
 layout_mode = 0
-offset_left = 896.0
-offset_top = 200.0
-offset_right = 1008.0
-offset_bottom = 256.0
-text = "TEST HP"
+offset_left = 984.0
+offset_top = 208.0
+offset_right = 1096.0
+offset_bottom = 264.0
+text = "- HP"
 
-[node name="TestCp" type="Button" parent="." unique_id=1764644151]
+[node name="IncreaseHp" type="Button" parent="." unique_id=654471348]
+layout_mode = 0
+offset_left = 832.0
+offset_top = 208.0
+offset_right = 944.0
+offset_bottom = 264.0
+text = "+ HP"
+
+[node name="IncreaseCp" type="Button" parent="." unique_id=1764644151]
 layout_mode = 0
 offset_left = 1024.0
 offset_top = 112.0
 offset_right = 1104.0
 offset_bottom = 152.0
-text = "TEST CP"
+text = "+ CP"
 
-[connection signal="pressed" from="TestHp" to="." method="_on_test_hp_pressed"]
+[node name="DecreaseCp" type="Button" parent="." unique_id=2119343571]
+layout_mode = 0
+offset_left = 856.0
+offset_top = 112.0
+offset_right = 936.0
+offset_bottom = 152.0
+text = "- CP"
+
+[node name="CpBar" parent="." unique_id=1864032624 node_paths=PackedStringArray("player") instance=ExtResource("3_l255k")]
+material = SubResource("ShaderMaterial_k7uam")
+layout_mode = 0
+offset_left = 56.0
+offset_top = 176.0
+offset_right = 408.0
+offset_bottom = 208.0
+player = NodePath("..")
+
+[connection signal="pressed" from="DecreaseHp" to="." method="_on_decrease_hp_pressed"]
+[connection signal="pressed" from="IncreaseHp" to="." method="_on_increase_hp_pressed"]
+[connection signal="pressed" from="IncreaseCp" to="." method="_on_increase_cp_pressed"]
+[connection signal="pressed" from="DecreaseCp" to="." method="_on_decrease_cp_pressed"]

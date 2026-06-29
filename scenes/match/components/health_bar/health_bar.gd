@@ -2,7 +2,7 @@ extends TextureProgressBar
 
 @export var player : Player
 
-var max_health : int = Util.one_v_one_starting_hp
+var max_health : int = Util.one_v_one_max_hp
 	
 func _ready() -> void:
 	player.health_changed.connect(update)

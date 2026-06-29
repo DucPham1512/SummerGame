@@ -3,9 +3,10 @@ extends Node
 var login_session_time: int = 86400   # default/fallback
 
 # Game rule – 1v1 mode (defaults mirror resources/game_rule.json)
-var one_v_one_starting_hp : int = 50
+var one_v_one_max_hp : int = 50
 var one_v_one_starting_cp : int = 1
-var one_v_one_deck_size : int = 17
+var one_v_one_max_cp : int = 15
+var one_v_one_deck_size : int = 18
 var one_v_one_starting_hand_size : int = 4
 var one_v_one_time_pool_seconds : int = 600
 var max_dice_rolls : int = 3
@@ -40,8 +41,9 @@ func load_game_rule() -> void:
 
 	var modes: Dictionary = data.get("modes", {})
 	var one_v_one: Dictionary = modes.get("one_v_one", {})
-	one_v_one_starting_hp = one_v_one.get("starting_hp", one_v_one_starting_hp)
+	one_v_one_max_hp = one_v_one.get("max_hp", one_v_one_max_hp)
 	one_v_one_starting_cp = one_v_one.get("starting_cp", one_v_one_starting_cp)
+	one_v_one_max_cp = one_v_one.get("max_cp", one_v_one_max_cp)
 	one_v_one_deck_size = one_v_one.get("deck_size", one_v_one_deck_size)
 	one_v_one_starting_hand_size = one_v_one.get("starting_hand_size", one_v_one_starting_hand_size)
 	one_v_one_time_pool_seconds = one_v_one.get("time_pool_seconds", one_v_one_time_pool_seconds)
