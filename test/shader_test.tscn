@@ -1,0 +1,60 @@
+[gd_scene format=3 uid="uid://dtsbartest001"]
+
+[ext_resource type="Shader" uid="uid://d2uvrmpom4at5" path="res://assets/shader/segmented_bar.gdshader" id="1_shader"]
+
+[sub_resource type="Gradient" id="Gradient_x"]
+offsets = PackedFloat32Array(0, 0.490099, 0.8267327)
+colors = PackedColorArray(0.13041583, 0.535011, 0.42549193, 1, 5.8719515e-06, 0.8230361, 0.69822514, 1, 0, 0.6787193, 0.7269864, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_x"]
+gradient = SubResource("Gradient_x")
+
+[sub_resource type="Gradient" id="Gradient_y"]
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_y"]
+gradient = SubResource("Gradient_y")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_bar"]
+shader = ExtResource("1_shader")
+shader_parameter/stepify = true
+shader_parameter/value = 1.0
+shader_parameter/count = 10
+shader_parameter/margin = Vector2(0.15, 0.2)
+shader_parameter/shear_angle = -0.11699995805749996
+shader_parameter/gradient_x = SubResource("GradientTexture1D_x")
+shader_parameter/gradient_y = SubResource("GradientTexture1D_y")
+shader_parameter/use_value_gradient = false
+shader_parameter/invert = false
+
+[node name="ShaderTest" type="Control" unique_id=1845414092]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="ColorRect" parent="." unique_id=1594760890]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.12, 0.14, 1)
+
+[node name="SegmentedBar" type="ColorRect" parent="." unique_id=684763790]
+material = SubResource("ShaderMaterial_bar")
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -350.0
+offset_top = -60.0
+offset_right = 350.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2

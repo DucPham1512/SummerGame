@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bpyf1y04p1ccf" path="res://scenes/match/match.gd" id="1_yqfj7"]
 [ext_resource type="PackedScene" uid="uid://mn7q5asr23w5" path="res://scenes/match_result/match_result.tscn" id="2_klj7n"]
+[ext_resource type="PackedScene" uid="uid://b7uqhxje5diby" path="res://scenes/match/player.tscn" id="3_h1ndw"]
 
 [node name="Match" type="Control" unique_id=827129721]
 layout_mode = 3
@@ -29,5 +30,11 @@ offset_top = 296.0
 offset_right = 768.0
 offset_bottom = 416.0
 text = "End Match"
+
+[node name="Player" parent="." unique_id=1110229630 instance=ExtResource("3_h1ndw")]
+layout_mode = 0
+offset_left = -5.0
+offset_top = 381.0
+offset_bottom = 651.0
 
 [connection signal="button_down" from="EndMatch" to="." method="_on_end_match_button_down"]
