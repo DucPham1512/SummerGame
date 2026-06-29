@@ -2,7 +2,7 @@ shader_type canvas_item;
 
 
 uniform bool stepify = true;
-uniform float value : hint_range(0.0, 1.0) = 1.0;
+uniform float value = 0.0; // number of filled segments (0..count)
 uniform int count = 1;
 uniform vec2 margin;
 uniform float shear_angle : hint_range(-1.0, 1.0) = 0.0; // -90 to 90 degrees
@@ -31,13 +31,10 @@ vec2 segmented_bar(vec2 uv) {
 	float separation_width = separation * bar_size;
 	float bar_value = 0.0;
 	for (int i=0;i<count;i++) {
-		float index_value = float(i+1) / float(count);
-
-		if (index_value > value) {
-			// Ceil
-			if (value < float(i) * bar_size || value <= 0.0) {
-				continue;
-			}
+		// `value` is the number of filled segments; light the first `value` of them.
+		// Integer value lights exactly that many; a fractional value ceils.
+		if (float(i) >= value) {
+			continue;
 		}
 
 		vec2 uv4 = uv;
@@ -47,7 +44,7 @@ vec2 segmented_bar(vec2 uv) {
 		uv4.x -= bar_size * float(i); // Offset
 		size4.x -= separation_width;
 		shape += square_shape(uv4, size4);
-		bar_value = index_value;
+		bar_value = float(i+1) / float(count);
 	}
 	return vec2(shape, bar_value);
 }
@@ -88,11 +85,13 @@ void fragment() {
 	float bar_size = 1.0/bar_count;
 	float separation_width = margin.x * bar_size;
 
+	float nvalue = value / float(count); // 0–1 fill ratio, for color sampling
+
 	vec2 shape = segmented_bar(uv);
 	vec4 gradient_color = vec4(0.0);
 	float gradient_x_pos = uv.x;
 	if (use_value_gradient) {
-		gradient_x_pos = value;
+		gradient_x_pos = nvalue;
 	}
 	vec4 gradient_color_x = get_gradient_color(gradient_x, gradient_x_pos);
 	if (stepify) {
@@ -100,7 +99,7 @@ void fragment() {
 		gradient_color_x = get_gradient_color(gradient_x, snap(gradient_x_pos, 1.0, step_size));
 	}
 	else {
-		shape.x *= step(uv.x, value);
+		shape.x *= step(uv.x, nvalue);
 	}
 
 	float y = map_range(0.5-(1.0-margin.y)/2.0, 0.5+(1.0-margin.y)/2.0, 0.0, 1.0, uv.y);

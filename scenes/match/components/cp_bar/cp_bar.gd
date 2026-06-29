@@ -9,4 +9,4 @@ func _ready() -> void:
 	player.cp_changed.connect(update)
 
 func update(player_cp : int) -> void:
-	material.set_shader_parameter("value", clampf((float(player_cp) - 0.5) / max_cp, 0.0, 1.0))
+	material.set_shader_parameter("value", clampi(player_cp, 0, max_cp))

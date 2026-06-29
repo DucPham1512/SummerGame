@@ -7,19 +7,21 @@ signal cp_changed(cp: int)
 var health : int
 var cp: int
 
+var max_hp : int = Util.one_v_one_max_hp
+var max_cp : int = Util.one_v_one_max_cp
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	health = Util.one_v_one_max_hp
+	health = max_hp
 	health_changed.emit(health)
 	cp = Util.one_v_one_starting_cp
 	cp_changed.emit(cp)
 	
 func update_player_health(value : int):
-	health += value
+	health = clampi(health + value, 0, max_hp)
 	health_changed.emit(health)
-
+	
 func update_player_cp(value : int):
-	cp += value
+	cp = clampi(cp + value, 0, max_cp)
 	cp_changed.emit(cp)
 
 
