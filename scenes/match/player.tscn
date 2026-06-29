@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://b7uqhxje5diby"]
+
+[ext_resource type="Script" uid="uid://0da0mme4de85" path="res://scenes/match/player.gd" id="1_6wsa6"]
+[ext_resource type="PackedScene" uid="uid://ihku1ecf4lbu" path="res://scenes/match/components/health_bar/health_bar.tscn" id="2_tc2cx"]
+
+[node name="Player" type="Control" unique_id=595356113]
+layout_mode = 3
+anchors_preset = 0
+offset_top = 320.0
+offset_right = 1152.0
+offset_bottom = 648.0
+script = ExtResource("1_6wsa6")
+
+[node name="HealthBar" parent="." unique_id=1784530346 node_paths=PackedStringArray("player") instance=ExtResource("2_tc2cx")]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -104.0
+offset_bottom = 0.0
+grow_vertical = 0
+player = NodePath("..")
+
+[node name="TestHp" type="Button" parent="." unique_id=552300344]
+layout_mode = 0
+offset_left = 896.0
+offset_top = 200.0
+offset_right = 1008.0
+offset_bottom = 256.0
+text = "TEST HP"
+
+[node name="TestCp" type="Button" parent="." unique_id=1764644151]
+layout_mode = 0
+offset_left = 1024.0
+offset_top = 112.0
+offset_right = 1104.0
+offset_bottom = 152.0
+text = "TEST CP"
+
+[connection signal="pressed" from="TestHp" to="." method="_on_test_hp_pressed"]
