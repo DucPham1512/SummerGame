@@ -10,7 +10,11 @@ const FRAMES_PER_RESULT := 4
 const SIDES := 6
 const IDLE_FRAME := SIDES * FRAMES_PER_RESULT   # 24, the blank die
 
-@export var toss_height: float = 240.0
+@export var toss_height_min: float = 120.0
+@export var toss_height_max: float = 240.0
+## How far from its slot a die lands after the throw (± px, x and y). The
+## gather phase then slides it back to the slot.
+@export var toss_scatter: float = 70.0
 @export var roll_time: float = 0.5
 @export var spin_turns: float = 2.0
 ## How many random faces flash during the toss. Higher = faster flicker
@@ -21,6 +25,7 @@ const IDLE_FRAME := SIDES * FRAMES_PER_RESULT   # 24, the blank die
 ## a single image and rotates into place before settling.
 @export var lock_in_flickers: int = 4
 
+var _base_x: float
 var _base_y: float
 var _rolling: bool = false
 var _last_flicker_step: int = -1
@@ -36,11 +41,10 @@ func _ready() -> void:
 ## Rolls the die. Pass 1-6 to force a result (e.g. from networked game logic),
 ## or leave default for a local random roll. The result is authoritative; the
 ## animation is pure presentation and never changes it.
-func roll(forced_result: int = -1) -> void:
+func roll(result: int = -1) -> void:
 	if _rolling:
 		return
 	_rolling = true
-	var result := forced_result
 	if result < 1 or result > SIDES:
 		result = randi_range(1, SIDES)
 	_animate_roll(result)
@@ -59,17 +63,26 @@ func _animate_roll(result: int) -> void:
 	var final_angle := 0.0
 	var spin := TAU * spin_turns
 	var dur := roll_time * randf_range(0.85, 1.15)
+	var toss_height := randf_range(toss_height_min, toss_height_max)
 
 	rotation = 0.0
-	position.y = _base_y
+	_base_x = position.x   # toss arcs relative to wherever the die currently sits
+	_base_y = position.y
 	_last_flicker_step = -1
 
+	# The throw lands at a random spot near the start; the gather slides it back.
+	var landing_x := _base_x + randf_range(-toss_scatter, toss_scatter)
+	var landing_y := _base_y + randf_range(-toss_scatter, toss_scatter)
+
 	var tween := create_tween().set_parallel(true)
-	# Toss up, then back down (the down leg is delayed to start at the apex).
+	# Toss up to the apex, then down to the landing spot (not back to the start).
 	tween.tween_property(self, "position:y", _base_y - toss_height, dur * 0.5)\
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "position:y", _base_y, dur * 0.5)\
+	tween.tween_property(self, "position:y", landing_y, dur * 0.5)\
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN).set_delay(dur * 0.5)
+	# Drift across to the landing spot's x over the whole arc.
+	tween.tween_property(self, "position:x", landing_x, dur)\
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	# Spin across the whole toss, decelerating onto the resting angle.
 	tween.tween_property(self, "rotation", spin, dur)\
 		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)

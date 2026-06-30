@@ -22,10 +22,11 @@ grow_vertical = 2
 color = Color(0.12, 0.12, 0.14, 1)
 
 [node name="Dice" parent="." unique_id=1348390561 instance=ExtResource("2")]
-position = Vector2(576, 300)
-scale = Vector2(6, 6)
+position = Vector2(571, 295)
+scale = Vector2(5.6875005, 5.6875005)
+frame = 11
+frame_progress = 0.8045156
 speed_scale = 2.0
-toss_height = 0.0
 spin_turns = 5.0
 flicker_count = 30
 
