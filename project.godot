@@ -31,6 +31,7 @@ SceneManager="*uid://c3yqbog81m85w"
 EventBus="*uid://dr3sea81iag3x"
 GDSync="*uid://c306hv827sb1i"
 Util="*uid://bwlc0uulee8iy"
+GameDataLoader="*uid://dx08uxinqrp3u"
 
 [editor_plugins]
 

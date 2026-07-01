@@ -47,4 +47,3 @@ func load_game_rule() -> void:
 	one_v_one_deck_size = one_v_one.get("deck_size", one_v_one_deck_size)
 	one_v_one_starting_hand_size = one_v_one.get("starting_hand_size", one_v_one_starting_hand_size)
 	one_v_one_time_pool_seconds = one_v_one.get("time_pool_seconds", one_v_one_time_pool_seconds)
-	
