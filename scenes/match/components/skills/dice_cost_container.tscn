@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://cbqwcckjxn42b"]
+
+[ext_resource type="Script" uid="uid://8s56el2sj3mt" path="res://scenes/match/components/skills/dice_cost_container.gd" id="1_fh0vy"]
+
+[node name="DiceCostContainer" type="HBoxContainer" unique_id=498859575]
+offset_right = 837.0
+offset_bottom = 169.0
+script = ExtResource("1_fh0vy")
