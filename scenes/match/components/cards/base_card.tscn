@@ -1,0 +1,48 @@
+[gd_scene load_steps=3 format=3 uid="uid://ccardbase01"]
+
+[ext_resource type="Script" path="res://scenes/match/components/cards/cards.gd" id="1"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_1"]
+
+[node name="BaseCard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Panel" type="Panel" parent="."]
+layout_mode = 0
+offset_left = 521.0
+offset_top = 147.0
+offset_right = 808.0
+offset_bottom = 552.0
+
+[node name="CardName" type="Label" parent="Panel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -41.0
+offset_top = 15.0
+offset_right = 41.0
+offset_bottom = 38.0
+grow_horizontal = 2
+text = "Card Name"
+label_settings = SubResource("LabelSettings_1")
+
+[node name="CpCost" type="Label" parent="Panel"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 40.0
+offset_bottom = 34.0
+text = "0"
+
+[node name="CardDescription" type="TextureRect" parent="Panel"]
+layout_mode = 0
+offset_top = 60.0
+offset_right = 287.0
+offset_bottom = 405.0
