@@ -88,5 +88,5 @@ func _load_description_scene() -> void:
 ## The base is a no-op. This is the imperative counterpart to a skill's declarative
 ## SkillEffect: a card orchestrates verbs (which may await rolls/choices) rather
 ## than returning a fixed data struct, since card effects aren't standardizable.
-func resolve(ctx: CardContext) -> void:
+func resolve(ctx: BoardContext) -> void:
 	pass
