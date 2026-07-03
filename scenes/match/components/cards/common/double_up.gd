@@ -8,5 +8,5 @@ func _init() -> void:
 	card_id = "double_up"
 
 
-func resolve(ctx: CardContext) -> void:
+func resolve(ctx: BoardContext) -> void:
 	ctx.draw_cards(2)

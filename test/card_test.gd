@@ -11,9 +11,9 @@ const DESCRIPTION_DIR := "res://scenes/match/components/cards/descriptions/"
 @onready var content: VBoxContainer = $Scroll/Content
 
 
-# Mock CardContext that records the verbs a card calls, so we can validate
+# Mock BoardContext that records the verbs a card calls, so we can validate
 # resolution without the real Board. Override more verbs as cards use them.
-class LoggingContext extends CardContext:
+class LoggingContext extends BoardContext:
 	var log: Array[String] = []
 
 	func gain_cp(amount: int) -> void:

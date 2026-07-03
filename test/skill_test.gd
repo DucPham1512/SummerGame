@@ -66,5 +66,5 @@ func _statuses(arr: Array) -> String:
 		return "-"
 	var parts: Array[String] = []
 	for s in arr:
-		parts.append("%s x%d" % [s.id, s.stacks])
+		parts.append("%s x%d" % [s.status_id, s.stacks])
 	return ", ".join(parts)

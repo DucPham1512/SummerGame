@@ -8,5 +8,5 @@ func _init() -> void:
 	card_id = "getting_paid"
 
 
-func resolve(ctx: CardContext) -> void:
+func resolve(ctx: BoardContext) -> void:
 	ctx.gain_cp(2)
