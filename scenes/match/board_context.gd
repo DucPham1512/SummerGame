@@ -1,17 +1,20 @@
-class_name CardContext
+class_name BoardContext
 extends RefCounted
 
-# Placeholder for the game's "rules API": the authoritative board verbs a card's
-# resolve() composes. The real implementation lands with the Board / battle-phase
-# system; card_test uses a mock that overrides these to log calls.
+# Placeholder for the game's "rules API": the authoritative board verbs that
+# cards' resolve(), status effects' spend()/phase hooks, and the SkillEffect
+# resolver all compose. The real implementation lands with the Board /
+# battle-phase system; the test scenes use mocks that override these to log
+# calls.
 #
-# Scoped to a single card play — it knows the caster. Verbs default to the caster
-# unless a target is given. All mutation, RNG (roll_die) and networked choices
-# (choose_*) funnel through here so resolution stays authoritative and
-# deterministic. Each verb warns until the real Board implements it, so an
-# unimplemented verb is loud rather than silent.
+# Scoped to a single resolution — it knows the caster (the player whose card /
+# skill / status is resolving). Verbs default to the caster unless a target is
+# given. All mutation, RNG (roll_die) and networked choices (choose_*) funnel
+# through here so resolution stays authoritative and deterministic. Each verb
+# warns until the real Board implements it, so an unimplemented verb is loud
+# rather than silent.
 
-var caster       # the player resolving the card
+var caster       # the player whose card / skill / status is resolving
 var opponent     # convenience reference
 
 
@@ -33,6 +36,9 @@ func apply_status(status_id: String, stacks: int = 1, target = null) -> void:
 func transfer_status(status_id: String, from_player, to_player) -> void:
 	_todo("transfer_status(%s, %s -> %s)" % [status_id, from_player, to_player])
 
+func halve_incoming_damage(target = null) -> void:
+	_todo("halve_incoming_damage(%s)" % target)
+
 func reroll_die(die) -> void:
 	_todo("reroll_die(%s)" % die)
 
@@ -49,4 +55,4 @@ func choose_player():
 
 
 func _todo(call_desc: String) -> void:
-	push_warning("CardContext.%s not implemented (placeholder)" % call_desc)
+	push_warning("BoardContext.%s not implemented (placeholder)" % call_desc)
