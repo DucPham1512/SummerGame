@@ -1,0 +1,92 @@
+[gd_scene format=3 uid="uid://cj2t7brfnrwbi"]
+
+[ext_resource type="Script" uid="uid://dxmgabhsnmr7d" path="res://scenes/match/components/hand/hand.gd" id="1_xswvv"]
+[ext_resource type="PackedScene" uid="uid://ccardbase01" path="res://scenes/match/components/cards/base_card.tscn" id="2_ls61q"]
+
+[node name="Hand" type="Control" unique_id=170794113]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_xswvv")
+card_size = Vector2(125, 187.5)
+card_spacing = 110.0
+bottom_margin = 40.0
+
+[node name="BaseCard" parent="." unique_id=1692258191 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.2482639
+anchor_top = 0.3904321
+anchor_right = 0.421875
+anchor_bottom = 0.85339504
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="BaseCard2" parent="." unique_id=352296337 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.43663195
+anchor_top = 0.37808642
+anchor_right = 0.6102431
+anchor_bottom = 0.8410494
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="BaseCard3" parent="." unique_id=337679511 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.052951388
+anchor_top = 0.375
+anchor_right = 0.2265625
+anchor_bottom = 0.837963
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="BaseCard4" parent="." unique_id=137999107 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.7126736
+anchor_top = 0.41512346
+anchor_right = 0.8862847
+anchor_bottom = 0.87808645
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="BaseCard5" parent="." unique_id=145817902 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.5911458
+anchor_top = 0.37654322
+anchor_right = 0.7647569
+anchor_bottom = 0.83950615
+offset_top = -1.5258789e-05
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="BaseCard6" parent="." unique_id=1746359682 instance=ExtResource("2_ls61q")]
+layout_mode = 1
+anchor_left = 0.8116319
+anchor_top = 0.41203704
+anchor_right = 0.9852431
+anchor_bottom = 0.875
+offset_right = -100.0
+offset_bottom = -150.0
+
+[node name="AddCard" type="Button" parent="." unique_id=1026575123]
+layout_mode = 0
+offset_left = 891.0
+offset_top = 142.0
+offset_right = 966.0
+offset_bottom = 185.0
+text = "Add
+"
+
+[node name="RemoveCard" type="Button" parent="." unique_id=174246354]
+layout_mode = 0
+offset_left = 476.0
+offset_top = 88.0
+offset_right = 536.0
+offset_bottom = 136.0
+text = "Remove
+"
+
+[connection signal="pressed" from="AddCard" to="." method="_on_add_card_pressed"]
+[connection signal="pressed" from="RemoveCard" to="." method="_on_remove_card_pressed"]
