@@ -1,0 +1,72 @@
+[gd_scene format=3 uid="uid://cqlf20geffte3"]
+
+[ext_resource type="Script" uid="uid://bdjggvgiki16" path="res://scenes/match/deck_and_hand.gd" id="1_cw47x"]
+[ext_resource type="Script" uid="uid://dxmgabhsnmr7d" path="res://scenes/match/components/hand/hand.gd" id="2_n2t3f"]
+[ext_resource type="PackedScene" uid="uid://yxmv6od5462f" path="res://scenes/match/components/deck/deck.tscn" id="3_vjdxe"]
+
+[node name="DeckAndHand" type="Control" unique_id=1818108325]
+layout_mode = 3
+anchor_top = 0.49382716
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_cw47x")
+metadata/_edit_use_anchors_ = true
+
+[node name="DrawButton" type="Button" parent="." unique_id=875188553]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.92300004
+anchor_top = 0.5
+anchor_right = 0.92300004
+anchor_bottom = 0.5
+offset_left = -63.29602
+offset_top = -204.0
+offset_right = 56.70398
+offset_bottom = -162.0
+text = "Draw"
+
+[node name="Deck" parent="." unique_id=259773230 instance=ExtResource("3_vjdxe")]
+layout_mode = 1
+anchor_left = 0.91300005
+anchor_top = 0.95100003
+anchor_right = 0.91300005
+anchor_bottom = 0.95100003
+offset_left = -107.776
+offset_top = -231.928
+offset_right = 60.224
+offset_bottom = -0.68463135
+grow_vertical = 0
+
+[node name="RemoveButton" type="Button" parent="." unique_id=392391963]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.91800004
+anchor_top = 0.5
+anchor_right = 0.91800004
+anchor_bottom = 0.5
+offset_left = -53.53601
+offset_top = -150.0
+offset_right = 53.46399
+offset_bottom = -99.0
+text = "Discard"
+
+[node name="Hand" type="Control" parent="." unique_id=1453151695]
+layout_mode = 1
+anchor_top = 0.5027027
+anchor_right = 1.0
+anchor_bottom = 0.9965299
+offset_top = -1.5258789e-05
+offset_bottom = -3.0517578e-05
+grow_horizontal = 2
+grow_vertical = 0
+script = ExtResource("2_n2t3f")
+placeholder_ids = Array[String]([])
+card_size = Vector2(150, 225)
+metadata/_edit_use_anchors_ = true
+
+[connection signal="pressed" from="DrawButton" to="." method="_on_draw"]
+[connection signal="pressed" from="RemoveButton" to="." method="_on_card_remove"]
