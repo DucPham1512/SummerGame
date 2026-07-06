@@ -104,3 +104,6 @@ func _on_remove_card_pressed() -> void:
 	if _cards.is_empty():
 		return
 	remove_card(_cards[0])
+
+func get_hand_size():
+	return _cards.size()

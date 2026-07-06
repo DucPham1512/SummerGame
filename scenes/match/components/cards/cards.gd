@@ -8,6 +8,30 @@ var card_repo := GameDataLoader.card_repository
 # they present the card's text and never affect logic.
 const DESCRIPTION_DIR := "res://scenes/match/components/cards/descriptions/"
 
+# Behaviour scripts per card id: instancing base_card.tscn alone yields this
+# base (visual-only) Card, so the factory swaps in the subclass that owns
+# resolve(). Ids without an entry stay base — they render, but do nothing when
+# played. Paths are load()ed lazily to avoid preload cycles (scene <-> script).
+const BASE_CARD_SCENE := "res://scenes/match/components/cards/base_card.tscn"
+const CARD_SCRIPTS := {
+	"getting_paid": "res://scenes/match/components/cards/common/getting_paid.gd",
+	"double_up": "res://scenes/match/components/cards/common/double_up.gd",
+}
+
+
+## Factory: builds a fully-initialised card for an id — instances the base card
+## scene, attaches the behaviour script registered for the id, and loads its
+## data. Use this when creating cards from code (deck, deals, tests).
+static func create(id : String) -> Card:
+	var card : Card = (load(BASE_CARD_SCENE) as PackedScene).instantiate()
+	if CARD_SCRIPTS.has(id):
+		# Swap before assigning card_id: set_script resets script variables,
+		# and it does not re-run _init, so the id must be set explicitly.
+		card.set_script(load(CARD_SCRIPTS[id]))
+	card.card_id = id
+	card.load_data()   # data fields usable immediately; the view refreshes on _ready
+	return card
+
 var card_id : String
 var char_id : String         # "" for common cards
 var card_name : String
