@@ -60,6 +60,7 @@ var _rest_rotation : float = 0.0  # the card's fan tilt at rest (degrees)
 var _dragging : bool = false
 var _drag_offset : Vector2 = Vector2.ZERO
 var _hover_tween : Tween
+var _consumed : bool = false      # set by consume(): the drop played the card
 
 func _process(_delta : float) -> void:
 	# Only runs mid-drag (set_process toggles with the drag state).
@@ -161,6 +162,7 @@ func _on_unhover() -> void:
 
 func _start_drag() -> void:
 	_dragging = true
+	_consumed = false
 	# Kills any lift tween, and straightens the card out of its fan tilt while
 	# it is carried (position itself is driven per-frame by _process).
 	_new_motion_tween().tween_property(self, "rotation_degrees", 0.0, 0.1)
@@ -174,14 +176,23 @@ func _end_drag() -> void:
 	_dragging = false
 	set_process(false)
 	drag_ended.emit(self, get_global_mouse_position())
-	# No drop zones yet: glide back to the rest spot in the hand, picking the
-	# fan tilt back up on the way. The match will later listen to drag_ended
-	# and play/consume the card instead.
+	# A drag_ended listener that played the card calls consume() during the
+	# emit above — the card is leaving the hand, so skip the return glide.
+	if _consumed:
+		return
+	# Not played: glide back to the rest spot in the hand, picking the fan
+	# tilt back up on the way.
 	var tween := _new_motion_tween().set_parallel(true)
 	tween.tween_property(self, "position", _rest_position, 0.15)\
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "rotation_degrees", _rest_rotation, 0.15)\
 			.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+
+
+## A drag_ended listener calls this — synchronously, during the emit — when the
+## drop plays the card, so _end_drag skips the glide back into the hand.
+func consume() -> void:
+	_consumed = true
 
 
 ## The hand calls this after laying the card out, so hover lifts and drag
