@@ -20,7 +20,7 @@ colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0)
 [sub_resource type="GradientTexture1D" id="GradientTexture1D_y"]
 gradient = SubResource("Gradient_y")
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_wc6xm"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_y4ko6"]
 resource_local_to_scene = true
 shader = ExtResource("4_k7uam")
 shader_parameter/stepify = true
@@ -41,21 +41,45 @@ anchor_bottom = 1.0
 script = ExtResource("1_6wsa6")
 metadata/_edit_use_anchors_ = true
 
-[node name="DeckAndHand" parent="." unique_id=1818108325 instance=ExtResource("2_y4ko6")]
+[node name="DeckAndHand" parent="." unique_id=1818108325 node_paths=PackedStringArray("player") instance=ExtResource("2_y4ko6")]
 layout_mode = 1
-
-[node name="HealthBar" parent="." unique_id=1784530346 node_paths=PackedStringArray("player") instance=ExtResource("2_tc2cx")]
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 32.0
-offset_top = -120.0
-offset_right = 392.0
-offset_bottom = -64.0
-grow_vertical = 0
-texture_progress_offset = Vector2(53, 24)
+anchor_top = 0.0
 player = NodePath("..")
+
+[node name="PlayerResourceContainer" type="VBoxContainer" parent="." unique_id=1350221274]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.994
+anchor_bottom = 0.994
+offset_left = 30.0
+offset_top = -131.03201
+offset_right = 734.0
+offset_bottom = -0.03201294
+
+[node name="HpContainer" type="HBoxContainer" parent="PlayerResourceContainer" unique_id=491517974]
+layout_mode = 2
+
+[node name="HealthBar" parent="PlayerResourceContainer/HpContainer" unique_id=1784530346 node_paths=PackedStringArray("player") instance=ExtResource("2_tc2cx")]
+layout_mode = 2
+texture_progress_offset = Vector2(53, 24)
+player = NodePath("../../..")
+
+[node name="HealthLabel" type="Label" parent="PlayerResourceContainer/HpContainer" unique_id=1762035939]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CpContainer" type="HBoxContainer" parent="PlayerResourceContainer" unique_id=214133758]
+layout_mode = 2
+
+[node name="CpBar" parent="PlayerResourceContainer/CpContainer" unique_id=1864032624 node_paths=PackedStringArray("player") instance=ExtResource("3_l255k")]
+material = SubResource("ShaderMaterial_y4ko6")
+layout_mode = 2
+size_flags_horizontal = 3
+player = NodePath("../../..")
+
+[node name="CpLabel" type="Label" parent="PlayerResourceContainer/CpContainer" unique_id=1085947134]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="DecreaseHp" type="Button" parent="." unique_id=552300344]
 layout_mode = 0
@@ -88,18 +112,6 @@ offset_top = 128.0
 offset_right = 232.0
 offset_bottom = 168.0
 text = "- CP"
-
-[node name="CpBar" parent="." unique_id=1864032624 node_paths=PackedStringArray("player") instance=ExtResource("3_l255k")]
-material = SubResource("ShaderMaterial_wc6xm")
-layout_mode = 1
-anchors_preset = 2
-anchor_top = 1.0
-anchor_bottom = 1.0
-offset_left = 72.0
-offset_top = -64.0
-offset_right = 344.0
-offset_bottom = -48.0
-player = NodePath("..")
 
 [connection signal="pressed" from="DecreaseHp" to="." method="_on_decrease_hp_pressed"]
 [connection signal="pressed" from="IncreaseHp" to="." method="_on_increase_hp_pressed"]
