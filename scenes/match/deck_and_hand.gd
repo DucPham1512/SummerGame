@@ -133,3 +133,12 @@ class HandBoardContext extends BoardContext:
 
 	func draw_cards(amount : int) -> void:
 		await _deck_and_hand.draw_cards(amount)
+
+	func apply_status(status_id : String, stacks : int = 1, target = null) -> void:
+		# Verbs default to the caster unless a target is given (a Combatant —
+		# either side carries real status tokens).
+		var who = target if target != null else caster
+		if who == null:
+			super.apply_status(status_id, stacks, target)   # harness warning
+			return
+		who.apply_status(status_id, stacks)

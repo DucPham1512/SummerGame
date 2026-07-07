@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://2a4n7i53k6js"]
 
 [ext_resource type="Script" uid="uid://bpyf1y04p1ccf" path="res://scenes/match/match.gd" id="1_yqfj7"]
+[ext_resource type="Script" uid="uid://c7tm4nqr8k2vs" path="res://scenes/match/turn_manager.gd" id="5_tmgr1"]
 [ext_resource type="PackedScene" uid="uid://mn7q5asr23w5" path="res://scenes/match_result/match_result.tscn" id="2_klj7n"]
 [ext_resource type="PackedScene" uid="uid://b7uqhxje5diby" path="res://scenes/match/player.tscn" id="3_h1ndw"]
 [ext_resource type="PackedScene" uid="uid://bqh3n2vpk7msc" path="res://scenes/match/opponent.tscn" id="4_nudob"]
@@ -40,4 +41,25 @@ grow_horizontal = 2
 [node name="Opponent" parent="." unique_id=1093824657 instance=ExtResource("4_nudob")]
 layout_mode = 1
 
+[node name="TurnManager" type="Node" parent="." unique_id=1467208395]
+script = ExtResource("5_tmgr1")
+
+[node name="PhaseLabel" type="Label" parent="." unique_id=1580476122]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 376.0
+offset_right = 440.0
+offset_bottom = 412.0
+theme_override_font_sizes/font_size = 24
+text = "Phase"
+
+[node name="NextPhase" type="Button" parent="." unique_id=1938501477]
+layout_mode = 0
+offset_left = 192.0
+offset_top = 424.0
+offset_right = 344.0
+offset_bottom = 480.0
+text = "Next Phase"
+
 [connection signal="button_down" from="EndMatch" to="." method="_on_end_match_button_down"]
+[connection signal="pressed" from="NextPhase" to="." method="_on_next_phase_pressed"]

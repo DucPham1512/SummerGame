@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://gnbtxti7dts4"]
+
+[ext_resource type="Script" uid="uid://d354752k6f1f7" path="res://scenes/match/components/status_effects/status_effect.gd" id="1_wjump"]
+
+[node name="Bleed" type="Control" unique_id=1602930181]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_wjump")
+
+[node name="StatusEffectIcon" type="Panel" parent="." unique_id=1695195254]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.035
+anchor_bottom = 0.062000003
+offset_right = -0.3199997
+offset_bottom = -0.1760025
+
+[node name="StackCountLabel" type="Label" parent="." unique_id=1623426515]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 23.0
