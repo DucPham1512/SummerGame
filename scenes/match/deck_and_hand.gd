@@ -1,9 +1,9 @@
 extends Control
 
-# Validates the deck -> hand deal flow: the deck scene sits as a pile on screen;
-# each Draw pops the top card, turns it face-up on the pile (reveal), holds a
-# beat so the player reads it, then flies it into its slot in the hand's fan.
-# Manual-inspection harness; nothing here is game logic.
+# Coordinates the deck -> hand -> play flow for one player's side: Draw deals
+# the top card into the hand's fan (flip, reveal, fly); a card dragged out of
+# the hand and released over the PlayArea is played — consumed out of the fan
+# and its effect resolved against this player's board verbs.
 
 const DECK_CODE := "getting_paid,double_up,getting_paid,double_up,getting_paid,double_up"
 
@@ -12,14 +12,20 @@ const FLIP_TIME := 0.18
 const REVEAL_HOLD := 0.4
 const FLY_TIME := 0.35
 
+## The player whose resources this hand belongs to (set by player.tscn); left
+## null in the standalone harness, where board verbs fall back to warnings.
+@export var player : Player
+
 @onready var deck : Deck = $Deck
 @onready var deck_pile : Panel = $Deck/Panel
 @onready var pile_count : Label = $Deck/Label
 @onready var hand : Control = $Hand
 @onready var draw_button : Button = $DrawButton
+@onready var play_area : Control = $PlayArea
 
 
 func _ready() -> void:
+	hand.card_released.connect(_on_card_released)
 	if not deck.construct_from_hash(DECK_CODE):
 		pile_count.text = "load failed"
 		return
@@ -28,16 +34,37 @@ func _ready() -> void:
 
 
 func _on_draw() -> void:
-	var card : Card = deck.draw()
-	if card == null:
-		pile_count.text = "empty"
-		return
-	# One deal at a time: every joining card shifts the fan slots, so a second
-	# in-flight card would aim at a stale slot.
+	await draw_cards(1)
+
+
+## Deals `amount` cards off the top of the pile into the hand, one at a time —
+## every joining card shifts the fan slots, so a second in-flight card would
+## aim at a stale slot. Doubles as the draw_cards board verb for card effects.
+func draw_cards(amount : int) -> void:
 	draw_button.disabled = true
-	_update_pile_count()
-	await _animate_draw(card)
+	for i in amount:
+		var card : Card = deck.draw()
+		if card == null:
+			pile_count.text = "empty"
+			break
+		_update_pile_count()
+		await _animate_draw(card)
 	draw_button.disabled = false
+
+
+# Runs synchronously (up to the await) inside the card's drag_ended emit, so
+# consume() reaches the card before it starts its glide-back tween.
+func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
+	if not play_area.get_global_rect().has_point(drop_global_position):
+		return   # not a play: the card glides back to the fan by itself
+	card.consume()          # suppress the glide-back
+	hand.play_card(card)    # out of the fan; this scene owns the node now
+	card.hide()             # gone visually at once; freed after resolution
+	# Static analysis sees the base (non-coroutine) resolve, but overrides may
+	# await board verbs — the await keeps the card alive until they finish.
+	@warning_ignore("redundant_await")
+	await card.resolve(HandBoardContext.new(player, self))
+	card.queue_free()
 
 
 # The deal: join the fan first (so the layout assigns the final slot), then
@@ -85,3 +112,24 @@ func _on_card_remove() -> void:
 		pass
 	else:
 		hand.remove_card(hand._cards[0])
+
+
+# Board verbs scoped to this side's player: just the subset the current cards
+# need, wired to what exists today (player resources, this deck and hand).
+# Anything else falls through to BoardContext's loud placeholder warnings.
+# Superseded by the real Board context when the battle-phase system lands.
+class HandBoardContext extends BoardContext:
+	var _deck_and_hand
+
+	func _init(p_caster, p_deck_and_hand) -> void:
+		caster = p_caster
+		_deck_and_hand = p_deck_and_hand
+
+	func gain_cp(amount : int) -> void:
+		if caster == null:
+			super.gain_cp(amount)   # standalone harness: keep the warning
+			return
+		caster.update_player_cp(amount)
+
+	func draw_cards(amount : int) -> void:
+		await _deck_and_hand.draw_cards(amount)
