@@ -28,8 +28,8 @@ var stack_limit : int = 1
 var transferable : bool = true
 
 var stacks : int = 0
-
-
+var stack_label : Label
+var picture_panel : Texture2D
 ## Factory: builds the behaviour subclass registered for the id, or a base
 ## data-only instance when there is none. Prefer this over new() for tokens a
 ## player actually owns; plain new() is fine for intent payloads (SkillEffect).
@@ -60,6 +60,13 @@ func load_data() -> bool:
 	description = entry.get("description", "")
 	stack_limit = int(entry.get("stack_limit", 1))
 	transferable = bool(entry.get("transferable", true))
+	# Icon per status id. load(), not preload: preload only takes constant
+	# paths. Missing art stays a warning, not an error — the token still works.
+	var icon_path := "res://assets/art/StatusEffect/%s.png" % status_id
+	if ResourceLoader.exists(icon_path):
+		picture_panel = load(icon_path)
+	else:
+		push_warning("StatusEffect: no icon for '%s' (expected %s)" % [status_id, icon_path])
 	return true
 
 
@@ -69,6 +76,7 @@ func load_data() -> bool:
 func add_stacks(amount : int) -> int:
 	var before := stacks
 	stacks = clampi(stacks + amount, 0, stack_limit)
+	_refresh_label()
 	return stacks - before
 
 
@@ -76,7 +84,15 @@ func add_stacks(amount : int) -> int:
 func remove_stacks(amount : int) -> int:
 	var before := stacks
 	stacks = clampi(stacks - amount, 0, stack_limit)
+	_refresh_label()
 	return before - stacks
+
+
+# The label is optional: it's assigned by the token's UI when one exists, and
+# stack changes must also work headless (tests, effects resolving off-screen).
+func _refresh_label() -> void:
+	if is_instance_valid(stack_label):
+		stack_label.text = "x%d" % stacks
 
 
 func is_depleted() -> bool:
