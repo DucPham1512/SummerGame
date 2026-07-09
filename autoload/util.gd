@@ -2,6 +2,13 @@ extends Node
 
 var login_session_time: int = 86400   # default/fallback
 
+# Set by the login screen after a successful GD-Sync account login.
+var active_username : String = ""
+
+# Matchmaking: the widest elo gap two players can be matched across.
+const ELO_THRESHOLD : int = 100
+const BASE_ELO : int = 1000
+
 # Game rule – 1v1 mode (defaults mirror resources/game_rule.json)
 var one_v_one_max_hp : int = 50
 var one_v_one_starting_cp : int = 1

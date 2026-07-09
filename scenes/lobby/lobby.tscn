@@ -35,6 +35,16 @@ offset_bottom = 472.0
 theme_override_font_sizes/font_size = 30
 text = "Find Match"
 
+[node name="SearchTimeLabel" type="Label" parent="." unique_id=1364928471]
+visible = false
+layout_mode = 0
+offset_left = 424.0
+offset_top = 480.0
+offset_right = 712.0
+offset_bottom = 516.0
+theme_override_font_sizes/font_size = 20
+horizontal_alignment = 1
+
 [node name="MatchConfirmation" type="Panel" parent="." unique_id=1989487540]
 layout_mode = 1
 anchors_preset = 8
