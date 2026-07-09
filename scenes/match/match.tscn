@@ -1,10 +1,10 @@
 [gd_scene format=3 uid="uid://2a4n7i53k6js"]
 
 [ext_resource type="Script" uid="uid://bpyf1y04p1ccf" path="res://scenes/match/match.gd" id="1_yqfj7"]
-[ext_resource type="Script" uid="uid://c7tm4nqr8k2vs" path="res://scenes/match/turn_manager.gd" id="5_tmgr1"]
 [ext_resource type="PackedScene" uid="uid://mn7q5asr23w5" path="res://scenes/match_result/match_result.tscn" id="2_klj7n"]
 [ext_resource type="PackedScene" uid="uid://b7uqhxje5diby" path="res://scenes/match/player.tscn" id="3_h1ndw"]
 [ext_resource type="PackedScene" uid="uid://bqh3n2vpk7msc" path="res://scenes/match/opponent.tscn" id="4_nudob"]
+[ext_resource type="Script" uid="uid://c7tm4nqr8k2vs" path="res://scenes/match/turn_manager.gd" id="5_tmgr1"]
 
 [node name="Match" type="Control" unique_id=827129721]
 layout_mode = 3

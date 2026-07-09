@@ -28,6 +28,7 @@ func _on_login_button_pressed() -> void:
 	var response_code : int = response["Code"]
 	
 	if response_code == ENUMS.ACCOUNT_LOGIN_RESPONSE_CODE.SUCCESS:
+		Util.active_username = GDSync.player_get_username()
 		login.emit()
 	else:
 		match(response_code):
