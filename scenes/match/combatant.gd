@@ -26,9 +26,20 @@ var cp : int
 var max_hp : int = Util.one_v_one_max_hp
 var max_cp : int = Util.one_v_one_max_cp
 
+## The character's companion (Nyra for the huntress); null when none. Assigned
+## by whatever builds the side (char selection later; tests directly).
+var companion : Companion = null
+
 # One token (stack pile) per status id — stacking merges, per StatusEffect's
 # "each instance is one player's token stack".
 var status_effects : Dictionary = {}
+
+
+## Direct health delta for resolution code and tests. Player/Opponent layer
+## their label updates on top through their own wrapper methods.
+func change_health(delta : int) -> void:
+	health = clampi(health + delta, 0, max_hp)
+	health_changed.emit(health)
 
 
 # --- status effects -----------------------------------------------------------

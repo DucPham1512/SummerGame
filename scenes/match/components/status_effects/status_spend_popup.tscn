@@ -1,0 +1,14 @@
+[gd_scene format=3 uid="uid://cspendpopscn7"]
+
+[ext_resource type="Script" uid="uid://cspendpop5t06" path="res://scenes/match/components/status_effects/status_spend_popup.gd" id="1_popup"]
+
+[node name="StatusSpendPopup" type="PanelContainer" unique_id=1449021873]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_popup")
