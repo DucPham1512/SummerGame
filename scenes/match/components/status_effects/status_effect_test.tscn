@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://q2sjbigf16ka"]
+
+[ext_resource type="Script" path="res://scenes/match/components/status_effects/status_effect_test.gd" id="1_test"]
+[ext_resource type="PackedScene" uid="uid://cspendpopscn7" path="res://scenes/match/components/status_effects/status_spend_popup.tscn" id="2_popup"]
+
+[node name="StatusEffectTest" type="Control" unique_id=1662084923]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_test")
+
+[node name="StatusSpendPopup" parent="." unique_id=1449021873 instance=ExtResource("2_popup")]
+layout_mode = 1

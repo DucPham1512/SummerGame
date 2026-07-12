@@ -21,3 +21,13 @@ func spend(ctx : BoardContext) -> bool:
 	remove_stacks(1)
 	ctx.halve_incoming_damage(ctx.caster)
 	return true
+
+
+func spend_options(ctx : BoardContext) -> Array[Dictionary]:
+	return [
+		{
+			"label": "Prevent half of the incoming damage (rounded up)",
+			"enabled": can_spend() and ctx.incoming_damage > 0,
+			"action": spend.bind(ctx),
+		},
+	]

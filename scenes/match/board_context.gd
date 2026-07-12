@@ -17,6 +17,10 @@ extends RefCounted
 var caster       # the player whose card / skill / status is resolving
 var opponent     # convenience reference
 
+## Damage currently being resolved against `caster`, when this context is
+## scoped to a defensive window (protect / bond spends read it). 0 otherwise.
+var incoming_damage : int = 0
+
 
 func gain_cp(amount: int) -> void:
 	_todo("gain_cp(%d)" % amount)

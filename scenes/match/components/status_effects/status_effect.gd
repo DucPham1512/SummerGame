@@ -19,6 +19,10 @@ extends RefCounted
 const EFFECT_SCRIPTS := {
 	"bleed": "res://scenes/match/components/status_effects/effects/bleed.gd",
 	"protect": "res://scenes/match/components/status_effects/effects/protect.gd",
+	"targeted": "res://scenes/match/components/status_effects/effects/targeted.gd",
+	"constrict": "res://scenes/match/components/status_effects/effects/constrict.gd",
+	"tactical_advantage": "res://scenes/match/components/status_effects/effects/tactical_advantage.gd",
+	"nyras_bond": "res://scenes/match/components/status_effects/effects/nyras_bond.gd",
 }
 
 var status_id : String
@@ -120,6 +124,22 @@ func spend(_ctx : BoardContext) -> bool:
 	return false
 
 
+## The token's spend MENU, driving the spend popup. Each option is
+## { "label": String, "enabled": bool, "action": Callable } — disabled options
+## still list (dimmed) so the player sees what the token could do. Special
+## kinds replace "action": {"kind": "split", "damage": int,
+## "on_confirm": Callable(own_share, other_share)} opens the popup's
+## damage-split stage. Base/passive tokens have no menu.
+func spend_options(_ctx : BoardContext) -> Array[Dictionary]:
+	return []
+
+
 ## Phase trigger: the match calls this during the owner's Upkeep Phase.
 func on_upkeep(_ctx : BoardContext) -> void:
+	pass
+
+
+## Phase trigger: the match calls this when the owner's Roll Phase concludes
+## (constrict expires here).
+func on_roll_phase_end(_ctx : BoardContext) -> void:
 	pass
