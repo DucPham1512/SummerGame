@@ -7,16 +7,21 @@ signal login
 @onready var password: LineEdit = $LoginWindow/VBoxContainer/PasswordContainer/PasswordInput
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	if not GDSync.is_active():
-		await GDSync.connected
+	await Util.ensure_gdsync_connected()
+	# ---- DEBUG ONLY: local two-instance testing -----------------------------
+	# Both instances share user://, so the saved GD-Sync session token would
+	# log them into the SAME account. An instance launched with a --profile=*
+	# user arg (Debug -> Customize Run Instances, args after "++") skips the
+	# session auto-login and always shows the manual form. REMOVE this block
+	# when done debugging.
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--profile"):
+			return
+	# ---- END DEBUG ONLY ------------------------------------------------------
 	var response_code: int = await GDSync.account_login_from_session(Util.login_session_time)
 	if response_code == ENUMS.ACCOUNT_LOGIN_RESPONSE_CODE.SUCCESS:
+		Util.active_username = GDSync.player_get_username()
 		login.emit()
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-	pass
 
 
 func _on_to_register_button_pressed() -> void:
@@ -24,6 +29,9 @@ func _on_to_register_button_pressed() -> void:
 
 
 func _on_login_button_pressed() -> void:
+	# The connection can still be mid-handshake (or have dropped) when the
+	# player clicks — reconnect and wait rather than failing the request.
+	await Util.ensure_gdsync_connected()
 	var response : Dictionary = await GDSync.account_login(email.text, password.text, Util.login_session_time)
 	var response_code : int = response["Code"]
 	

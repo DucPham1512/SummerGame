@@ -31,6 +31,9 @@ const INTERACTIVE_PHASES : Array[Phase] = [
 
 var active : Combatant
 var phase : Phase = Phase.UPKEEP
+## 1-based count of turns taken this match; 1 = the start player's first turn
+## (which skips its Income Phase per the rules).
+var turn_count : int = 0
 
 var _running : bool = false
 var _phase_done : bool = false   # end_phase() called during the entered emit
@@ -47,9 +50,11 @@ func start(turn_order : Array[Combatant]) -> void:
 		push_error("TurnManager: start() needs at least one combatant")
 		return
 	_running = true
+	turn_count = 0
 	var turn := 0
 	while _running:
 		active = turn_order[turn % turn_order.size()]
+		turn_count += 1
 		await _run_turn(active)
 		turn += 1
 
@@ -94,6 +99,14 @@ func _run_turn(combatant : Combatant) -> void:
 ## offensive/defensive/any qualifier roll_phase cards carry. Placeholder rules
 ## — tighten alongside the real battle system (e.g. who may act in OFFENSIVE
 ## vs DEFENSIVE, instant timing windows).
+## Whether `who` may SELL cards right now (discard one, +1 CP): their own main
+## phases, plus their Discard Phase (selling down to the hand limit).
+func can_sell(who : Combatant) -> bool:
+	if who != active:
+		return false
+	return phase == Phase.MAIN_ONE or phase == Phase.MAIN_TWO or phase == Phase.DISCARD
+
+
 func can_play(who : Combatant, card_phase : String, card_subtype : String = "") -> bool:
 	match card_phase:
 		"instant_action":

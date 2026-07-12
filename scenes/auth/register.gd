@@ -34,6 +34,9 @@ func _on_register_button_pressed() -> void:
 		push_error("Password repetition doesn't match")
 		return
 
+	# The connection can still be mid-handshake (or have dropped) when the
+	# player clicks — reconnect and wait rather than failing the request.
+	await Util.ensure_gdsync_connected()
 	var response_code: int = await GDSync.account_create(mail.text, username.text, password.text)
 	if response_code == ENUMS.ACCOUNT_CREATION_RESPONSE_CODE.SUCCESS:
 		await _submit_starting_elo()

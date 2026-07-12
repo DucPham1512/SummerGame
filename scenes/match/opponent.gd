@@ -88,6 +88,19 @@ func on_opponent_played(slot : int, card_id : String) -> void:
 	# of the match state once the real Board context exists.
 
 
+## The opponent sold/discarded the card at `slot`: one placeholder leaves the
+## fan unrevealed — which card it was stays private; only the count is public.
+func on_opponent_sold(slot : int) -> void:
+	var placeholder : Card = opp_hand.get_card_at(slot)
+	if placeholder == null:
+		# Out-of-range slot (shouldn't happen): trim the last card so at least
+		# the public count stays right.
+		placeholder = opp_hand.get_card_at(opp_hand.get_hand_size() - 1)
+		if placeholder == null:
+			return
+	opp_hand.remove_card(placeholder)
+
+
 ## Absolute values, not deltas: replicated state should converge even if an
 ## event is missed.
 func on_opponent_health(new_health : int) -> void:

@@ -5,9 +5,10 @@ var login_session_time: int = 86400   # default/fallback
 # Set by the login screen after a successful GD-Sync account login.
 var active_username : String = ""
 
-# Matchmaking: the widest elo gap two players can be matched across.
-const ELO_THRESHOLD : int = 100
+# Matchmaking: base elo seeded at registration, and the widest elo gap two
+# players can be matched across.
 const BASE_ELO : int = 1000
+const ELO_THRESHOLD : int = 100
 
 # Game rule – 1v1 mode (defaults mirror resources/game_rule.json)
 var one_v_one_max_hp : int = 50
@@ -15,6 +16,7 @@ var one_v_one_starting_cp : int = 1
 var one_v_one_max_cp : int = 15
 var one_v_one_deck_size : int = 18
 var one_v_one_starting_hand_size : int = 4
+var one_v_one_hand_limit : int = 6   # Discard Phase: sell down to this many
 var one_v_one_time_pool_seconds : int = 600
 var max_dice_rolls : int = 3
 
@@ -22,6 +24,18 @@ func _ready() -> void:
 	load_config()
 	load_game_rule()
 	GDSync.start_multiplayer()
+
+
+## GD-Sync cloud/account calls fail while the plugin is not connected. It is
+## started at boot (above), but the connection may still be mid-handshake — or
+## have dropped back to disabled after a failure — when a screen needs it.
+## Await this before any account/cloudstorage request. start_multiplayer() is
+## safe to repeat: it no-ops unless the connection is fully disabled.
+func ensure_gdsync_connected() -> void:
+	if GDSync.is_active():
+		return
+	GDSync.start_multiplayer()
+	await GDSync.connected
 	
 func load_config() -> void:
 	var file := FileAccess.open("res://config/game_config.json", FileAccess.READ)
@@ -53,4 +67,5 @@ func load_game_rule() -> void:
 	one_v_one_max_cp = one_v_one.get("max_cp", one_v_one_max_cp)
 	one_v_one_deck_size = one_v_one.get("deck_size", one_v_one_deck_size)
 	one_v_one_starting_hand_size = one_v_one.get("starting_hand_size", one_v_one_starting_hand_size)
+	one_v_one_hand_limit = one_v_one.get("hand_limit", one_v_one_hand_limit)
 	one_v_one_time_pool_seconds = one_v_one.get("time_pool_seconds", one_v_one_time_pool_seconds)

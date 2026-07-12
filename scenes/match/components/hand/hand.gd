@@ -155,3 +155,9 @@ func get_card_at(index : int) -> Card:
 	if index < 0 or index >= _cards.size():
 		return null
 	return _cards[index]
+
+
+## The fan index a card currently occupies (-1 if not in this hand). The sync
+## layer sends this with a play so the remote view reveals the right slot.
+func get_card_index(card : Card) -> int:
+	return _cards.find(card)

@@ -5,6 +5,8 @@
 [ext_resource type="PackedScene" uid="uid://b7uqhxje5diby" path="res://scenes/match/player.tscn" id="3_h1ndw"]
 [ext_resource type="PackedScene" uid="uid://bqh3n2vpk7msc" path="res://scenes/match/opponent.tscn" id="4_nudob"]
 [ext_resource type="Script" uid="uid://c7tm4nqr8k2vs" path="res://scenes/match/turn_manager.gd" id="5_tmgr1"]
+[ext_resource type="Script" uid="uid://bmt4sync7k9qe" path="res://scenes/match/match_sync.gd" id="6_msync"]
+[ext_resource type="PackedScene" uid="uid://pofdkqvdq2ch" path="res://scenes/match/dice_rolling.tscn" id="7_dicer"]
 
 [node name="Match" type="Control" unique_id=827129721]
 layout_mode = 3
@@ -44,6 +46,9 @@ layout_mode = 1
 [node name="TurnManager" type="Node" parent="." unique_id=1467208395]
 script = ExtResource("5_tmgr1")
 
+[node name="MatchSync" type="Node" parent="." unique_id=1755203648]
+script = ExtResource("6_msync")
+
 [node name="PhaseLabel" type="Label" parent="." unique_id=1580476122]
 layout_mode = 0
 offset_left = 40.0
@@ -60,6 +65,11 @@ offset_top = 424.0
 offset_right = 344.0
 offset_bottom = 480.0
 text = "Next Phase"
+
+[node name="DiceRolling" parent="." unique_id=1204837745 instance=ExtResource("7_dicer")]
+visible = false
+layout_mode = 1
+auto_roll = false
 
 [connection signal="button_down" from="EndMatch" to="." method="_on_end_match_button_down"]
 [connection signal="pressed" from="NextPhase" to="." method="_on_next_phase_pressed"]
