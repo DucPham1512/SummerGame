@@ -12,9 +12,24 @@ const FLIP_TIME := 0.18
 const REVEAL_HOLD := 0.4
 const FLY_TIME := 0.35
 
+## Public match events for the sync layer (MatchSync broadcasts these to the
+## other client) and the match's phase logic. Slot is the fan index at the
+## moment the card left the hand.
+signal card_played(slot : int, card_id : String)
+signal card_sold(slot : int, card_id : String)
+signal cards_drawn(count : int)
+
 ## The player whose resources this hand belongs to (set by player.tscn); left
 ## null in the standalone harness, where board verbs fall back to warnings.
 @export var player : Player
+
+## Injected by the match (MatchSync) to gate plays by turn phase; null in the
+## standalone harness = every drop is legal.
+var turn_manager : TurnManager
+
+## The public discard pile, top of pile = last element. Ids only — the card
+## nodes are freed; an empty deck rebuilds itself from these (shuffled).
+var discard_pile : Array[String] = []
 
 @onready var deck : Deck = $Deck
 @onready var deck_pile : Panel = $Deck/Panel
@@ -22,6 +37,7 @@ const FLY_TIME := 0.35
 @onready var hand : Control = $Hand
 @onready var draw_button : Button = $DrawButton
 @onready var play_area : Control = $PlayArea
+@onready var sell_area : Control = $SellArea
 
 
 func _ready() -> void:
@@ -45,25 +61,70 @@ func draw_cards(amount : int) -> void:
 	for i in amount:
 		var card : Card = deck.draw()
 		if card == null:
-			pile_count.text = "empty"
-			break
+			# Rules 1.2: an empty deck refills from the shuffled discard pile.
+			if discard_pile.is_empty():
+				pile_count.text = "empty"
+				break
+			_reshuffle_discard_into_deck()
+			card = deck.draw()
+			if card == null:
+				break
 		_update_pile_count()
+		cards_drawn.emit(1)
 		await _animate_draw(card)
 	draw_button.disabled = false
+
+
+func _reshuffle_discard_into_deck() -> void:
+	deck.construct_from_hash(",".join(discard_pile))
+	discard_pile.clear()
+	deck.shuffle()
+	_update_pile_count()
 
 
 # Runs synchronously (up to the await) inside the card's drag_ended emit, so
 # consume() reaches the card before it starts its glide-back tween.
 func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
+	# Selling wins over playing when the zones overlap: check it first.
+	if sell_area.get_global_rect().has_point(drop_global_position):
+		_sell_card(card)
+		return
 	if not play_area.get_global_rect().has_point(drop_global_position):
 		return   # not a play: the card glides back to the fan by itself
+	# Phase gate: outside a legal window the card just glides back.
+	if turn_manager != null and not turn_manager.can_play(player, card.phase, card.phase_subtype):
+		return
+	# Rules 1.3: playing an action card pays its CP cost; unaffordable cards
+	# glide back.
+	if player != null and player.cp < card.cp_cost:
+		return
+	var slot : int = hand.get_card_index(card)   # before the fan closes the gap
 	card.consume()          # suppress the glide-back
 	hand.play_card(card)    # out of the fan; this scene owns the node now
 	card.hide()             # gone visually at once; freed after resolution
+	if player != null and card.cp_cost > 0:
+		player.update_player_cp(-card.cp_cost)
+	card_played.emit(slot, card.card_id)
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.
 	@warning_ignore("redundant_await")
 	await card.resolve(HandBoardContext.new(player, self))
+	discard_pile.append(card.card_id)   # resolved actions land on the pile
+	card.queue_free()
+
+
+# Rules 1.3 / 1.8 — Sell a card: discard it from the hand, gain +1 CP.
+func _sell_card(card : Card) -> void:
+	if turn_manager != null and not turn_manager.can_sell(player):
+		return   # outside a selling window: glide back
+	var slot : int = hand.get_card_index(card)
+	card.consume()
+	hand.play_card(card)
+	card.hide()
+	discard_pile.append(card.card_id)
+	if player != null:
+		player.update_player_cp(1)
+	card_sold.emit(slot, card.card_id)
 	card.queue_free()
 
 

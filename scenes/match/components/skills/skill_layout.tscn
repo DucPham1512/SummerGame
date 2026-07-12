@@ -1,0 +1,76 @@
+[gd_scene format=3 uid="uid://2eo5p3oycgnq"]
+
+[ext_resource type="Script" uid="uid://sn118yy6qhff" path="res://scenes/match/components/skills/skill_layout.gd" id="1_4nlbh"]
+[ext_resource type="PackedScene" uid="uid://lm2vep6tv5to" path="res://scenes/match/components/skills/base_skill.tscn" id="1_tf476"]
+
+[node name="SkillLayout" type="Control" unique_id=375170549]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_4nlbh")
+
+[node name="Ultimate" parent="." unique_id=1129750300 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.4236111
+anchor_top = 0.086419754
+anchor_right = 0.5902778
+anchor_bottom = 0.962963
+
+[node name="Skill1" parent="." unique_id=328385364 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.034722224
+anchor_top = 0.074074075
+anchor_right = 0.2013889
+anchor_bottom = 0.4814815
+
+[node name="Skill2" parent="." unique_id=1209682588 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.6041667
+anchor_top = 0.5555556
+anchor_right = 0.7708333
+anchor_bottom = 0.962963
+
+[node name="Skill3" parent="." unique_id=1666217281 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.5972222
+anchor_top = 0.09876543
+anchor_right = 0.7638889
+anchor_bottom = 0.50617284
+
+[node name="Skill4" parent="." unique_id=181335046 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.24305555
+anchor_top = 0.077160485
+anchor_right = 0.4097222
+anchor_bottom = 0.4845679
+
+[node name="Skill5" parent="." unique_id=1087830925 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.7916667
+anchor_top = 0.086419754
+anchor_right = 0.9583333
+anchor_bottom = 0.49382716
+
+[node name="Skill6" parent="." unique_id=206514096 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.034722224
+anchor_top = 0.5308642
+anchor_right = 0.2013889
+anchor_bottom = 0.9382716
+
+[node name="Skill7" parent="." unique_id=127387500 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.24305555
+anchor_top = 0.5185185
+anchor_right = 0.4097222
+anchor_bottom = 0.9259259
+
+[node name="Skill8" parent="." unique_id=9030211 instance=ExtResource("1_tf476")]
+layout_mode = 1
+anchor_left = 0.7916667
+anchor_top = 0.54320985
+anchor_right = 0.9583333
+anchor_bottom = 0.9506173

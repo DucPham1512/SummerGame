@@ -52,6 +52,7 @@ func _on_find_match_button_down() -> void:
 	_search_time = 0.0
 	_searching = true
 	search_time_label.show()
+	await Util.ensure_gdsync_connected()
 	var response : Dictionary = await GDSync.leaderboard_get_score("elo", Util.active_username)
 	# New accounts have no submission yet; the default result scores them 0.
 	_elo = int(response.get("Result", {}).get("Score", Util.BASE_ELO))
