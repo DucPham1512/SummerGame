@@ -37,14 +37,37 @@ func heal(amount: int, target = null) -> void:
 func apply_status(status_id: String, stacks: int = 1, target = null) -> void:
 	_todo("apply_status(%s x%d, %s)" % [status_id, stacks, target])
 
+func remove_status(status_id: String, target = null) -> void:
+	_todo("remove_status(%s, %s)" % [status_id, target])
+
+func clear_all_statuses(target = null) -> void:
+	_todo("clear_all_statuses(%s)" % target)
+
 func transfer_status(status_id: String, from_player, to_player) -> void:
 	_todo("transfer_status(%s, %s -> %s)" % [status_id, from_player, to_player])
 
 func halve_incoming_damage(target = null) -> void:
 	_todo("halve_incoming_damage(%s)" % target)
 
+func prevent_damage(amount: int, target = null) -> void:
+	_todo("prevent_damage(%d, %s)" % [amount, target])
+
+# --- dice-session verbs (the roll UI hookup implements these) -----------------
+
 func reroll_die(die) -> void:
 	_todo("reroll_die(%s)" % die)
+
+func change_die_value(die_index: int, value: int, target = null) -> void:
+	_todo("change_die_value(#%d -> %d, %s)" % [die_index, value, target])
+
+func adjust_die_value(die_index: int, delta: int, target = null) -> void:
+	_todo("adjust_die_value(#%d %+d, %s)" % [die_index, delta, target])
+
+func copy_die_value(from_index: int, to_index: int, target = null) -> void:
+	_todo("copy_die_value(#%d -> #%d, %s)" % [from_index, to_index, target])
+
+func grant_extra_roll(target = null) -> void:
+	_todo("grant_extra_roll(%s)" % target)
 
 # Value-returning / interactive verbs. In the real context these are coroutines
 # (await a synced RNG roll or a networked choice); the placeholders return
@@ -56,6 +79,22 @@ func roll_die() -> int:
 func choose_player():
 	_todo("choose_player()")
 	return null
+
+func choose_status(target = null) -> String:
+	_todo("choose_status(%s)" % target)
+	return ""
+
+func choose_die(target = null) -> int:
+	_todo("choose_die(%s)" % target)
+	return -1
+
+func choose_die_value() -> int:
+	_todo("choose_die_value()")
+	return 6
+
+func choose_option(options: Array) -> int:
+	_todo("choose_option(%s)" % [options])
+	return 0
 
 
 func _todo(call_desc: String) -> void:

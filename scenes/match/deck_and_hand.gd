@@ -104,6 +104,7 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	card.hide()             # gone visually at once; freed after resolution
 	if player != null and card.cp_cost > 0:
 		player.update_player_cp(-card.cp_cost)
+		print("[cards] paid %d CP for %s (cp now %d)" % [card.cp_cost, card.card_id, player.cp])
 	card_played.emit(slot, card.card_id)
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.

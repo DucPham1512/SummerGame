@@ -16,6 +16,22 @@ const BASE_CARD_SCENE := "res://scenes/match/components/cards/base_card.tscn"
 const CARD_SCRIPTS := {
 	"getting_paid": "res://scenes/match/components/cards/common/getting_paid.gd",
 	"double_up": "res://scenes/match/components/cards/common/double_up.gd",
+	"triple_up": "res://scenes/match/components/cards/common/triple_up.gd",
+	"vegas_baby": "res://scenes/match/components/cards/common/vegas_baby.gd",
+	"buh_bye": "res://scenes/match/components/cards/common/buh_bye.gd",
+	"get_that_outa_here": "res://scenes/match/components/cards/common/get_that_outa_here.gd",
+	"what_status_effects": "res://scenes/match/components/cards/common/what_status_effects.gd",
+	"transference": "res://scenes/match/components/cards/common/transference.gd",
+	"not_this_time": "res://scenes/match/components/cards/common/not_this_time.gd",
+	"helping_hand": "res://scenes/match/components/cards/common/helping_hand.gd",
+	"samesies": "res://scenes/match/components/cards/common/samesies.gd",
+	"so_wild": "res://scenes/match/components/cards/common/so_wild.gd",
+	"twice_as_wild": "res://scenes/match/components/cards/common/twice_as_wild.gd",
+	"six_it": "res://scenes/match/components/cards/common/six_it.gd",
+	"tip_it": "res://scenes/match/components/cards/common/tip_it.gd",
+	"try_try_again": "res://scenes/match/components/cards/common/try_try_again.gd",
+	"one_more_time": "res://scenes/match/components/cards/common/one_more_time.gd",
+	"better_d": "res://scenes/match/components/cards/common/better_d.gd",
 }
 
 
