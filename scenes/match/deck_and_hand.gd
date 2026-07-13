@@ -23,6 +23,12 @@ signal cards_drawn(count : int)
 ## null in the standalone harness, where board verbs fall back to warnings.
 @export var player : Player
 
+## The sibling skill board (set by player.tscn), so character cards can
+## upgrade a kit slot; left null in the standalone harness / on the opponent
+## side (which has no DeckAndHand at all — opponent cards resolve on that
+## client's own instance).
+@export var skill_layout : SkillLayout
+
 ## Injected by the match (MatchSync) to gate plays by turn phase; null in the
 ## standalone harness = every drop is legal.
 var turn_manager : TurnManager
@@ -204,3 +210,30 @@ class HandBoardContext extends BoardContext:
 			super.apply_status(status_id, stacks, target)   # harness warning
 			return
 		who.apply_status(status_id, stacks)
+
+	func deal_damage(amount : int, target = null) -> void:
+		var who = target if target != null else caster
+		if who == null:
+			super.deal_damage(amount, target)   # harness warning
+			return
+		who.change_health(-amount)
+
+	func heal(amount : int, target = null) -> void:
+		var who = target if target != null else caster
+		if who == null:
+			super.heal(amount, target)   # harness warning
+			return
+		who.change_health(amount)
+
+	func heal_companion(amount : int, target = null) -> void:
+		var who = target if target != null else caster
+		if who == null or who.companion == null:
+			super.heal_companion(amount, target)   # harness warning
+			return
+		who.companion.heal(amount)
+
+	func upgrade_skill(slot_index : int) -> void:
+		if _deck_and_hand.skill_layout == null:
+			super.upgrade_skill(slot_index)   # harness warning
+			return
+		_deck_and_hand.skill_layout.upgrade_slot(slot_index)
