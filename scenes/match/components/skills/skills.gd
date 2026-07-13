@@ -18,6 +18,27 @@ const DESCRIPTION_DIR := "res://scenes/match/components/skills/descriptions/"
 const BASE_SKILL_SCENE := "res://scenes/match/components/skills/base_skill.tscn"
 const SKILL_SCRIPTS := {
 	"huntress_jungle_fury": "res://scenes/match/components/skills/Huntress/ultimate/huntress_jungle_fury.gd",
+	"huntress_animalistic": "res://scenes/match/components/skills/Huntress/attack/huntress_animalistic.gd",
+	"huntress_animalistic_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_animalistic_ii.gd",
+	"huntress_savage": "res://scenes/match/components/skills/Huntress/attack/huntress_savage.gd",
+	"huntress_savage_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_savage_ii.gd",
+	"huntress_hunt": "res://scenes/match/components/skills/Huntress/attack/huntress_hunt.gd",
+	"huntress_resuscitate": "res://scenes/match/components/skills/Huntress/attack/huntress_resuscitate.gd",
+	"huntress_resuscitate_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_resuscitate_ii.gd",
+	"huntress_feral_instincts": "res://scenes/match/components/skills/Huntress/attack/huntress_feral_instincts.gd",
+	"huntress_feral_instincts_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_feral_instincts_ii.gd",
+	"huntress_swipe": "res://scenes/match/components/skills/Huntress/attack/huntress_swipe.gd",
+	"huntress_onslaught": "res://scenes/match/components/skills/Huntress/attack/huntress_onslaught.gd",
+	"huntress_onslaught_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_onslaught_ii.gd",
+	"huntress_feral": "res://scenes/match/components/skills/Huntress/attack/huntress_feral.gd",
+	"huntress_feral_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_feral_ii.gd",
+	"huntress_ferocious": "res://scenes/match/components/skills/Huntress/attack/huntress_ferocious.gd",
+	"huntress_predatory_advance": "res://scenes/match/components/skills/Huntress/attack/huntress_predatory_advance.gd",
+	"huntress_predatory_advance_ii": "res://scenes/match/components/skills/Huntress/attack/huntress_predatory_advance_ii.gd",
+	"huntress_jugular": "res://scenes/match/components/skills/Huntress/attack/huntress_jugular.gd",
+	"huntress_maternal_bond": "res://scenes/match/components/skills/Huntress/defense/huntress_maternal_bond.gd",
+	"huntress_maternal_bond_ii": "res://scenes/match/components/skills/Huntress/defense/huntress_maternal_bond_ii.gd",
+	"huntress_maternal_bond_iii": "res://scenes/match/components/skills/Huntress/defense/huntress_maternal_bond_iii.gd",
 	"tactician_higher_ground": "res://scenes/match/components/skills/Tactician/ultimate/tactician_higher_ground.gd",
 }
 
@@ -105,7 +126,18 @@ func _load_description_scene() -> void:
 
 	var packed : PackedScene = load(path)
 	_description_instance = packed.instantiate()
+	# Descriptions are purely cosmetic but sit on top of the whole skill rect;
+	# any STOP-filter Control in them would eat the clicks this node's
+	# gui_input needs (the selection window). Force them mouse-transparent.
+	_make_mouse_transparent(_description_instance)
 	description_slot.add_child(_description_instance)
+
+
+static func _make_mouse_transparent(node : Node) -> void:
+	if node is Control:
+		node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	for child in node.get_children():
+		_make_mouse_transparent(child)
 
 
 ## Whether an offensive roll can pay this ability's dice cost. `symbol_counts`
@@ -144,8 +176,22 @@ static func _has_straight(values : Array[int], length : int) -> bool:
 	return false
 
 
-## Override per skill to compute the resolved effect. The base returns an empty
-## (no-op) effect. Resolution is via the return value — a combat resolver applies
-## the SkillEffect to game state. (The `effect` signal, if used, is cosmetic only.)
-func activate() -> SkillEffect:
+## Override per skill to compute the resolved effect. `ctx` carries the roll
+## the activation is scoped to (roll_values / roll_symbols) plus the board
+## verbs — skills with mid-activation rolls await ctx.roll_die(). The base
+## returns an empty (no-op) effect. Resolution is via the return value — a
+## combat resolver applies the SkillEffect to game state. (The `effect`
+## signal, if used, is cosmetic only.)
+func activate(_ctx : BoardContext) -> SkillEffect:
 	return SkillEffect.new()
+
+
+## A die value (1-6) mapped to the symbol it shows on the character's die,
+## from the dice data — the counterpart of dice_cost_container's symbol->face.
+static func symbol_for_value(character_id : String, value : int) -> String:
+	for die_id in GameDataLoader.dice_repository:
+		var die : Dictionary = GameDataLoader.dice_repository[die_id]
+		if die.get("character_id", "") != character_id:
+			continue
+		return die.get("faces", {}).get(str(value), "")
+	return ""

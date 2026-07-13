@@ -180,7 +180,9 @@ func _run_defensive_roll() -> void:
 	var defender_board : SkillLayout = opponent_skill_layout if turn_manager.active == player \
 			else player_skill_layout
 	defender_board.show()
-	var defensive_skill : Skill = defender_board.skills[7]   # slot 8
+	var defensive_skill : Skill = defender_board.defensive_skill()
+	if defensive_skill == null:
+		return   # no defensive ability on this board (bare base layout)
 	var dice_count := int(defensive_skill.dice_cost.get("dice_count", 1))
 	defensive_roll = await dice_roller.run(1, dice_count)   # single roll, no rerolls
 	if turn_manager.phase != TurnManager.Phase.DEFENSIVE:
@@ -190,15 +192,37 @@ func _run_defensive_roll() -> void:
 	defender_board.enable_only(defensive_skill)
 
 
-# The defender pressed their defensive skill: activate it, then attack and
-# defense outcomes apply together (1.6 — simultaneous at the phase's end).
+# The defender pressed their defensive skill: activate it with the defensive
+# roll, apply its outcomes (counter damage on the attacker, companion heals
+# and statuses on the defender), then the attack lands — attack and defense
+# resolving together (1.6 — simultaneous at the phase's end).
 func _on_defense_activated(skill : Skill) -> void:
 	player_skill_layout.clear_selection()
 	opponent_skill_layout.clear_selection()
-	var _skill_effect := skill.activate()
-	print("[skills] defense activated: %s | defensive roll %s" % [skill.skill_id, defensive_roll])
-	# TODO(resolver): tally defensive_roll per symbol (prevention, tokens,
-	# CP gains...) and fold the defense into the damage application below.
+	var defender : Combatant = opponent if turn_manager.active == player else player
+	var attacker : Combatant = turn_manager.active
+	var board : SkillLayout = opponent_skill_layout if defender == opponent else player_skill_layout
+	var ctx := BoardContext.new()
+	ctx.caster = defender
+	ctx.opponent = attacker
+	ctx.roll_values = defensive_roll.duplicate()
+	ctx.roll_symbols = _tally_symbols(defensive_roll, board.character)
+	# Overrides may await mid-activation rolls; the base isn't a coroutine.
+	@warning_ignore("redundant_await")
+	var defense : SkillEffect = await skill.activate(ctx)
+	print("[skills] defense activated: %s | roll %s | counter %d | companion heal %d" % [
+			skill.skill_id, defensive_roll, defense.damage, defense.heal_companion])
+	if defense.damage > 0:
+		if attacker == player:
+			(player as Player).update_player_health(-defense.damage)
+		else:
+			(opponent as Opponent).on_opponent_health(opponent.health - defense.damage)
+	if defense.heal_companion > 0 and defender.companion != null:
+		defender.companion.heal(defense.heal_companion)
+	for status in defense.grant_to_self:
+		defender.apply_status(status.status_id, status.stacks)
+	for status in defense.inflict_on_opponent:
+		attacker.apply_status(status.status_id, status.stacks)
 	_resolve_pending_attack()
 	_end_phase_networked()
 
@@ -226,10 +250,20 @@ func _on_skill_chosen(skill : Skill) -> void:
 		_on_defense_activated(skill)
 		return
 	player_skill_layout.clear_selection()
-	var skill_effect := skill.activate()
+	var ctx := BoardContext.new()
+	ctx.caster = player
+	ctx.opponent = opponent
+	ctx.roll_values = offensive_roll.duplicate()
+	ctx.roll_symbols = _tally_symbols(offensive_roll, player_skill_layout.character)
+	# Overrides may await mid-activation rolls (Savage's branch die); the
+	# base isn't a coroutine, hence the static-analysis ignore.
+	@warning_ignore("redundant_await")
+	var skill_effect : SkillEffect = await skill.activate(ctx)
 	# Rules 1.4 step 3: effects that need no target resolve immediately.
 	for status in skill_effect.grant_to_self:
 		player.apply_status(status.status_id, status.stacks)
+	if skill_effect.heal_companion > 0 and player.companion != null:
+		player.companion.heal(skill_effect.heal_companion)
 	for status_id in skill_effect.stack_limit_delta:
 		var token : StatusEffect = player.get_status(status_id)
 		if token != null:

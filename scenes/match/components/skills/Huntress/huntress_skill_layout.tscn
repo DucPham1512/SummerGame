@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3 uid="uid://dhuntlayout02"]
+
+[ext_resource type="PackedScene" uid="uid://2eo5p3oycgnq" path="res://scenes/match/components/skills/skill_layout.tscn" id="1_base"]
+[ext_resource type="Script" uid="uid://chuntlayt5gd1" path="res://scenes/match/components/skills/Huntress/huntress_skill_layout.gd" id="2_hunt"]
+
+[node name="HuntressSkillLayout" instance=ExtResource("1_base")]
+script = ExtResource("2_hunt")

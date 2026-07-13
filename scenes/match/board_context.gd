@@ -21,6 +21,11 @@ var opponent     # convenience reference
 ## scoped to a defensive window (protect / bond spends read it). 0 otherwise.
 var incoming_damage : int = 0
 
+## The roll this resolution is scoped to (skill activations scale off it):
+## the raw die values and their symbol tally through the caster's die faces.
+var roll_values : Array[int] = []
+var roll_symbols : Dictionary = {}
+
 
 func gain_cp(amount: int) -> void:
 	_todo("gain_cp(%d)" % amount)
