@@ -1,15 +1,21 @@
 class_name SkillLayout
 extends Control
 
-# One side's ability board: nine base_skill.tscn slots (Ultimate + Skill1..8)
-# arranged in the scene. On _ready each slot's editor placeholder is replaced
-# with the real skill for this character's kit, built through the
-# Skill.create(id) factory (node replacement, not set_script-in-place: the
-# skill's @onready view refs would not survive a script swap on a live node).
+# One side's ability board. The scene provides nine anchored positions
+# (Ultimate + Skill1..8); on _ready each of the eight skill positions becomes
+# a slot GROUP host filled from the character kit's current stage. A group
+# holds one or two skills — primary on top, secondary below in a smaller
+# panel, matching the physical cards — each with its own cost and its own
+# press target: the slot is effectively "usable" whenever ANY of its skills
+# can pay the roll, and which one fires is decided by where the player
+# presses. Upgrading a slot advances it to the kit's next stage, replacing
+# the whole group (upgrades may introduce the secondary, e.g. Savage ->
+# Savage II + Hunt).
 #
-# Per-character subclasses (e.g. TacticianSkillLayout) override _kit() with
-# their id lists; the base's empty kit leaves the placeholders untouched, so
-# the generic scene still opens standalone.
+# Skills are built through Skill.create(id) — node replacement, never
+# set_script on a live node (the skill's @onready view refs would not
+# survive). Per-character subclasses override _kit(); the base's empty kit
+# leaves the editor placeholders untouched so the generic scene still opens.
 
 ## The player picked an activatable skill during a selection window.
 signal skill_chosen(skill : Skill)
@@ -19,19 +25,24 @@ signal skill_chosen(skill : Skill)
 const AFFORDABLE_TINT := Color(1.0, 0.84, 0.0)
 const UNAFFORDABLE_DIM := Color(0.55, 0.55, 0.55)
 
+## Vertical share of a slot: the primary skill gets twice the secondary.
+const PRIMARY_STRETCH := 2.0
+const SECONDARY_STRETCH := 1.0
+
+const SLOT_COUNT := 8
+
 ## The character whose kit this layout shows (char_id, e.g. "tactician").
 ## Subclasses set it in _init.
 var character : String = ""
 
+var ultimate : Skill = null
+var slot_hosts : Array[VBoxContainer] = []   # container occupying each slot rect
+var slot_skills : Array = []                 # per slot: Array of Skill nodes
+var slot_stage : Array[int] = []             # per slot: current kit stage
+
 # Skill -> the bound gui_input Callable connected for this window (bound
 # callables aren't reliably comparable, so keep them to disconnect cleanly).
 var _click_handlers : Dictionary = {}
-
-@onready var ultimate : Skill = $Ultimate
-@onready var skills : Array[Skill] = [
-	$Skill1, $Skill2, $Skill3, $Skill4,
-	$Skill5, $Skill6, $Skill7, $Skill8,
-]
 
 
 func _ready() -> void:
@@ -39,12 +50,14 @@ func _ready() -> void:
 	# must spin around the rect centre at every resolution — pivot_offset is
 	# pixel-based, so it has to track the size instead of being scene-baked.
 	pivot_offset = size * 0.5
-	resized.connect(func(): pivot_offset = size * 0.5)
+	resized.connect(func() -> void: pivot_offset = size * 0.5)
 	_populate()
 
 
-## Override per character: the ids filling the board, as
-## { "ultimate": String, "skills": Array[String] (8 ids, Skill1..Skill8 order) }.
+## Override per character. Format:
+## { "ultimate": String,
+##   "slots": [ {"stages": [[ids...], [ids...], ...]} x8 ] } — stage 0 is the
+## base loadout; each further stage is what upgrade_slot() swaps in.
 ## The base has no kit — the layout keeps its editor placeholders.
 func _kit() -> Dictionary:
 	return {}
@@ -54,65 +67,103 @@ func _populate() -> void:
 	var kit := _kit()
 	if kit.is_empty():
 		return
-	ultimate = _replace_slot(ultimate, kit.get("ultimate", ""))
-	var ids : Array = kit.get("skills", [])
-	for i in mini(ids.size(), skills.size()):
-		skills[i] = _replace_slot(skills[i], ids[i])
+	ultimate = _replace_with_skill($Ultimate, kit.get("ultimate", ""))
+	var slots : Array = kit.get("slots", [])
+	for i in SLOT_COUNT:
+		var placeholder : Control = get_node("Skill%d" % (i + 1))
+		var host := VBoxContainer.new()
+		host.name = "Slot%d" % (i + 1)
+		host.add_theme_constant_override("separation", 4)
+		add_child(host)
+		move_child(host, placeholder.get_index())
+		_copy_layout(host, placeholder)
+		placeholder.queue_free()
+		slot_hosts.append(host)
+		slot_skills.append([])
+		slot_stage.append(0)
+		if i < slots.size():
+			_fill_slot(i, slots[i].get("stages", [[]])[0])
 
 
-## Swaps the currently slotted `current` skill for the upgraded one (its "_ii"
-## data entry / behaviour). Returns the new node, or null (with a warning) if
-## `current` isn't on this board. Shared by every character — upgrades are a
-## kit-wide mechanic, not a tactician special.
-func upgrade_skill(current : Skill, upgraded_id : String) -> Skill:
-	if current == ultimate:
-		ultimate = _replace_slot(ultimate, upgraded_id)
-		return ultimate
-	var index := skills.find(current)
-	if index == -1:
-		push_warning("SkillLayout: upgrade_skill target is not on this board (-> %s)" % upgraded_id)
+# Replaces slot `index`'s group with freshly built skills for `ids`
+# (first id = primary, optional second = secondary).
+func _fill_slot(index : int, ids : Array) -> void:
+	for old in slot_skills[index]:
+		if is_instance_valid(old):
+			old.queue_free()
+	var group : Array = []
+	for j in ids.size():
+		var skill := Skill.create(ids[j])
+		skill.set_anchors_preset(Control.PRESET_TOP_LEFT)   # container drives layout
+		skill.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		skill.size_flags_stretch_ratio = PRIMARY_STRETCH if j == 0 else SECONDARY_STRETCH
+		slot_hosts[index].add_child(skill)
+		group.append(skill)
+	slot_skills[index] = group
+
+
+## Advances slot `index` (0-based) to its next kit stage, replacing the whole
+## group. Returns false when the slot is already at its final stage.
+func upgrade_slot(index : int) -> bool:
+	var slots : Array = _kit().get("slots", [])
+	if index < 0 or index >= mini(slots.size(), slot_stage.size()):
+		return false
+	var stages : Array = slots[index].get("stages", [])
+	var next := slot_stage[index] + 1
+	if next >= stages.size():
+		return false
+	slot_stage[index] = next
+	_fill_slot(index, stages[next])
+	print("[skills] slot %d upgraded to stage %d: %s" % [index + 1, next, stages[next]])
+	return true
+
+
+## Whether slot `index` still has an upgrade stage left.
+func has_upgrade(index : int) -> bool:
+	var slots : Array = _kit().get("slots", [])
+	if index < 0 or index >= mini(slots.size(), slot_stage.size()):
+		return false
+	return slot_stage[index] + 1 < slots[index].get("stages", []).size()
+
+
+## The current defensive ability — slot 8's primary, by kit convention.
+func defensive_skill() -> Skill:
+	if slot_skills.size() < SLOT_COUNT or (slot_skills[SLOT_COUNT - 1] as Array).is_empty():
 		return null
-	skills[index] = _replace_slot(skills[index], upgraded_id)
-	return skills[index]
+	return slot_skills[SLOT_COUNT - 1][0]
 
 
 # --- roll-window selection ------------------------------------------------------
 
-## Opens the pick window after a roll: every slot the roll can pay lights up
-## and becomes clickable (-> skill_chosen); the rest dim. `symbol_counts` and
-## `values` come from the dice result.
+## Opens the pick window after a roll: every skill the roll can pay lights up
+## and becomes clickable (-> skill_chosen); the rest dim. Grouped slots light
+## per skill, so a slot with only its secondary payable offers exactly that.
 func enable_selection(symbol_counts : Dictionary, values : Array[int]) -> void:
 	clear_selection()
 	var affordable : Array[String] = []
 	for slot in _all_slots():
 		if slot.can_activate_with(symbol_counts, values):
-			var handler := _on_slot_gui_input.bind(slot)
-			slot.gui_input.connect(handler)
-			_click_handlers[slot] = handler
-			slot.modulate = AFFORDABLE_TINT
+			_make_clickable(slot)
 			affordable.append(slot.skill_id)
 		else:
 			slot.modulate = UNAFFORDABLE_DIM
 	print("[skills] selection open — roll %s = %s | activatable: %s" % [
-			values, symbol_counts, affordable if not affordable.is_empty() else "none"])
+			values, symbol_counts, str(affordable) if not affordable.is_empty() else "none"])
 
 
-## Opens a pick window for exactly one slot (the defensive skill during the
-## defensive roll phase): it alone lights up and is clickable; the rest dim.
+## Opens a pick window for exactly one skill (the defensive ability during
+## the defensive roll phase): it alone lights up; the rest dim.
 func enable_only(chosen : Skill) -> void:
 	clear_selection()
 	for slot in _all_slots():
 		if slot == chosen:
-			var handler := _on_slot_gui_input.bind(slot)
-			slot.gui_input.connect(handler)
-			_click_handlers[slot] = handler
-			slot.modulate = AFFORDABLE_TINT
+			_make_clickable(slot)
 		else:
 			slot.modulate = UNAFFORDABLE_DIM
 	print("[skills] defense window — only %s activatable" % chosen.skill_id)
 
 
-## Closes the pick window: every slot back to normal look, clicks disconnected.
+## Closes the pick window: every skill back to normal look, clicks disconnected.
 func clear_selection() -> void:
 	for slot in _click_handlers:
 		if is_instance_valid(slot):
@@ -120,6 +171,13 @@ func clear_selection() -> void:
 	_click_handlers.clear()
 	for slot in _all_slots():
 		slot.modulate = Color.WHITE
+
+
+func _make_clickable(slot : Skill) -> void:
+	var handler := _on_slot_gui_input.bind(slot)
+	slot.gui_input.connect(handler)
+	_click_handlers[slot] = handler
+	slot.modulate = AFFORDABLE_TINT
 
 
 func _on_slot_gui_input(event : InputEvent, slot : Skill) -> void:
@@ -132,35 +190,44 @@ func _on_slot_gui_input(event : InputEvent, slot : Skill) -> void:
 		skill_chosen.emit.call_deferred(slot)
 
 
+## Every live skill on the board, groups flattened, ultimate included.
 func _all_slots() -> Array[Skill]:
-	var out : Array[Skill] = skills.duplicate()
-	out.append(ultimate)
+	var out : Array[Skill] = []
+	for group in slot_skills:
+		for skill in group:
+			if is_instance_valid(skill):
+				out.append(skill)
+	if is_instance_valid(ultimate):
+		out.append(ultimate)
 	return out
 
 
-# Replaces a slot node with a freshly built skill, keeping the slot's place in
-# the scene: same layout (anchors/offsets) and same tree position. Returns the
-# replacement — or the old node untouched when the id is empty.
-func _replace_slot(old : Skill, id : String) -> Skill:
+# --- node plumbing ----------------------------------------------------------------
+
+# Builds the skill for `id` in the placeholder's place (used for the single
+# ultimate slot). Returns the replacement, or the placeholder when id is "".
+func _replace_with_skill(old : Skill, id : String) -> Skill:
 	if id.is_empty():
 		return old
 	var fresh := Skill.create(id)
-	# Hand the slot's name over: the old node keeps it until freed (end of
-	# frame), which would auto-rename the newcomer on collision.
 	var slot_name := old.name
 	old.name = slot_name + "_replaced"
 	fresh.name = slot_name
 	add_child(fresh)
 	move_child(fresh, old.get_index())
-	# The slots are anchor-positioned by the scene; copy the whole layout.
-	fresh.set_anchors_preset(Control.PRESET_TOP_LEFT)   # clear instance defaults first
-	fresh.anchor_left = old.anchor_left
-	fresh.anchor_top = old.anchor_top
-	fresh.anchor_right = old.anchor_right
-	fresh.anchor_bottom = old.anchor_bottom
-	fresh.offset_left = old.offset_left
-	fresh.offset_top = old.offset_top
-	fresh.offset_right = old.offset_right
-	fresh.offset_bottom = old.offset_bottom
+	_copy_layout(fresh, old)
 	old.queue_free()
 	return fresh
+
+
+# Gives `node` the placeholder's exact rect: same anchors, same offsets.
+func _copy_layout(node : Control, from : Control) -> void:
+	node.set_anchors_preset(Control.PRESET_TOP_LEFT)   # clear instance defaults first
+	node.anchor_left = from.anchor_left
+	node.anchor_top = from.anchor_top
+	node.anchor_right = from.anchor_right
+	node.anchor_bottom = from.anchor_bottom
+	node.offset_left = from.offset_left
+	node.offset_top = from.offset_top
+	node.offset_right = from.offset_right
+	node.offset_bottom = from.offset_bottom

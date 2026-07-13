@@ -6,8 +6,15 @@ extends RefCounted
 # never mutates players/dice directly. This keeps resolution deterministic and
 # testable (same input -> same SkillEffect), which the netcode needs.
 
-## Undefendable damage dealt to the opponent.
+## Damage dealt to the opponent.
 var damage : int = 0
+
+## Whether `damage` is undefendable (skips the defender's Defensive Ability).
+## Carried for the defense gating; ignored where defense isn't modelled yet.
+var undefendable : bool = false
+
+## HP restored to the caster's companion (Nyra heals).
+var heal_companion : int = 0
 
 ## Status effects inflicted on the opponent.
 var inflict_on_opponent : Array[StatusEffect] = []

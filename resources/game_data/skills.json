@@ -314,40 +314,22 @@
       "_impl_note": "Secondary ability of feral_instincts_ii (relationship handled in code)."
     },
     {
-      "id": "huntress_onslaught_small_straight",
+      "id": "huntress_onslaught",
       "character_id": "huntress",
       "name": "Onslaught",
       "type": "attack",
       "dice_cost": { "type": "pattern", "pattern": "small_straight" },
-      "description": "Inflict 1 Bleed. Deal 4 damage.",
-      "_impl_note": "Variation of the Onslaught ability (small straight cost). Same ability as onslaught_large_straight, different dice cost — split into two rows because each has a distinct dice_cost (see _notes, option B)."
+      "description": "Small straight: inflict 1 Bleed, deal 4 damage. Large straight: inflict 2 Bleed, deal 7 damage.",
+      "_impl_note": "Single ability, one container (like animalistic). Cost gate is a small straight (a large straight always contains one); code checks the roll for a large straight and scales the effect (1 bleed/4 dmg -> 2 bleed/7 dmg)."
     },
     {
-      "id": "huntress_onslaught_large_straight",
-      "character_id": "huntress",
-      "name": "Onslaught",
-      "type": "attack",
-      "dice_cost": { "type": "pattern", "pattern": "large_straight" },
-      "description": "Inflict 2 Bleed. Deal 7 damage.",
-      "_impl_note": "Variation of the Onslaught ability (large straight cost). Same ability as onslaught_small_straight, different dice cost. Tagged 'Onslaught Secondary' in source."
-    },
-    {
-      "id": "huntress_onslaught_ii_small_straight",
+      "id": "huntress_onslaught_ii",
       "character_id": "huntress",
       "name": "Onslaught II",
       "type": "attack",
       "dice_cost": { "type": "pattern", "pattern": "small_straight" },
-      "description": "Inflict 1 Bleed. Deal 5 damage.",
-      "_impl_note": "Upgrade variation (small straight). Pairs with onslaught_ii_large_straight."
-    },
-    {
-      "id": "huntress_onslaught_ii_large_straight",
-      "character_id": "huntress",
-      "name": "Onslaught II",
-      "type": "attack",
-      "dice_cost": { "type": "pattern", "pattern": "large_straight" },
-      "description": "Inflict 2 Bleed. Deal 8 damage.",
-      "_impl_note": "Upgrade variation (large straight). Tagged 'Onslaught II Secondary' in source."
+      "description": "Small straight: inflict 1 Bleed, deal 5 damage. Large straight: inflict 2 Bleed, deal 8 damage.",
+      "_impl_note": "Upgrade of huntress_onslaught, same single-container pattern; code scales 1 bleed/5 dmg -> 2 bleed/8 dmg on a large straight."
     },
     {
       "id": "huntress_feral",
