@@ -29,3 +29,15 @@ var stack_limit_delta : Dictionary = {}
 ## Status ids to set to the caster's current stack limit ("gain max ...").
 ## Applied after stack_limit_delta so a freshly-raised limit is respected.
 var max_out_self : Array[String] = []
+
+## Cards the caster draws (tactician's Strategize / Interdiction / Profiteer).
+var draw_cards : int = 0
+
+## Damage shaved off the pending attack before it resolves (defense effects
+## only — Countermeasures' per-Flag prevention).
+var prevent_damage : int = 0
+
+## The activation grants an immediate additional Offensive Roll Phase
+## (Profiteer's medal branch): the phase doesn't end; a fresh roll session
+## starts instead.
+var extra_offensive_phase : bool = false
