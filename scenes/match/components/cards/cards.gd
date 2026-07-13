@@ -47,6 +47,21 @@ const CARD_SCRIPTS := {
 	"huntress_pounce": "res://scenes/match/components/cards/huntress/card_huntress_pounce.gd",
 	"huntress_prowl": "res://scenes/match/components/cards/huntress/card_huntress_prowl.gd",
 	"huntress_resilient": "res://scenes/match/components/cards/huntress/card_huntress_resilient.gd",
+	"tactician_saber_strike_ii": "res://scenes/match/components/cards/tactician/card_tactician_saber_strike_ii.gd",
+	"tactician_carpet_bomb_ii": "res://scenes/match/components/cards/tactician/card_tactician_carpet_bomb_ii.gd",
+	"tactician_profiteer_ii": "res://scenes/match/components/cards/tactician/card_tactician_profiteer_ii.gd",
+	"tactician_strategic_approach_ii": "res://scenes/match/components/cards/tactician/card_tactician_strategic_approach_ii.gd",
+	"tactician_flank_ii": "res://scenes/match/components/cards/tactician/card_tactician_flank_ii.gd",
+	"tactician_maneuver_ii": "res://scenes/match/components/cards/tactician/card_tactician_maneuver_ii.gd",
+	"tactician_exploit_ii": "res://scenes/match/components/cards/tactician/card_tactician_exploit_ii.gd",
+	"tactician_countermeasures_ii": "res://scenes/match/components/cards/tactician/card_tactician_countermeasures_ii.gd",
+	"tactician_countermeasures_iii": "res://scenes/match/components/cards/tactician/card_tactician_countermeasures_iii.gd",
+	"tactician_upper_hand": "res://scenes/match/components/cards/tactician/card_tactician_upper_hand.gd",
+	"tactician_war_room": "res://scenes/match/components/cards/tactician/card_tactician_war_room.gd",
+	"tactician_bunker_up": "res://scenes/match/components/cards/tactician/card_tactician_bunker_up.gd",
+	"tactician_disengage": "res://scenes/match/components/cards/tactician/card_tactician_disengage.gd",
+	"tactician_feigned_retreat": "res://scenes/match/components/cards/tactician/card_tactician_feigned_retreat.gd",
+	"tactician_ambush": "res://scenes/match/components/cards/tactician/card_tactician_ambush.gd",
 }
 
 
