@@ -39,6 +39,9 @@ func deal_damage(amount: int, target = null) -> void:
 func heal(amount: int, target = null) -> void:
 	_todo("heal(%d, %s)" % [amount, target])
 
+func heal_companion(amount: int, target = null) -> void:
+	_todo("heal_companion(%d, %s)" % [amount, target])
+
 func apply_status(status_id: String, stacks: int = 1, target = null) -> void:
 	_todo("apply_status(%s x%d, %s)" % [status_id, stacks, target])
 
@@ -73,6 +76,14 @@ func copy_die_value(from_index: int, to_index: int, target = null) -> void:
 
 func grant_extra_roll(target = null) -> void:
 	_todo("grant_extra_roll(%s)" % target)
+
+# --- character-kit verbs --------------------------------------------------------
+
+## Advances the caster's own skill layout slot `slot_index` to its next kit
+## stage (the card counterpart of SkillLayout.upgrade_slot). Always self —
+## there is no "upgrade the opponent's kit" card.
+func upgrade_skill(slot_index: int) -> void:
+	_todo("upgrade_skill(slot %d)" % slot_index)
 
 # Value-returning / interactive verbs. In the real context these are coroutines
 # (await a synced RNG roll or a networked choice); the placeholders return

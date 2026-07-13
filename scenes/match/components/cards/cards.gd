@@ -32,6 +32,21 @@ const CARD_SCRIPTS := {
 	"try_try_again": "res://scenes/match/components/cards/common/try_try_again.gd",
 	"one_more_time": "res://scenes/match/components/cards/common/one_more_time.gd",
 	"better_d": "res://scenes/match/components/cards/common/better_d.gd",
+	"huntress_animalistic_ii": "res://scenes/match/components/cards/huntress/card_huntress_animalistic_ii.gd",
+	"huntress_savage_ii": "res://scenes/match/components/cards/huntress/card_huntress_savage_ii.gd",
+	"huntress_resuscitate_ii": "res://scenes/match/components/cards/huntress/card_huntress_resuscitate_ii.gd",
+	"huntress_feral_instincts_ii": "res://scenes/match/components/cards/huntress/card_huntress_feral_instincts_ii.gd",
+	"huntress_onslaught_ii": "res://scenes/match/components/cards/huntress/card_huntress_onslaught_ii.gd",
+	"huntress_feral_ii": "res://scenes/match/components/cards/huntress/card_huntress_feral_ii.gd",
+	"huntress_predatory_advance_ii": "res://scenes/match/components/cards/huntress/card_huntress_predatory_advance_ii.gd",
+	"huntress_maternal_bond_ii": "res://scenes/match/components/cards/huntress/card_huntress_maternal_bond_ii.gd",
+	"huntress_maternal_bond_iii": "res://scenes/match/components/cards/huntress/card_huntress_maternal_bond_iii.gd",
+	"huntress_blood_bond": "res://scenes/match/components/cards/huntress/card_huntress_blood_bond.gd",
+	"huntress_primal_roar": "res://scenes/match/components/cards/huntress/card_huntress_primal_roar.gd",
+	"huntress_savage_slash": "res://scenes/match/components/cards/huntress/card_huntress_savage_slash.gd",
+	"huntress_pounce": "res://scenes/match/components/cards/huntress/card_huntress_pounce.gd",
+	"huntress_prowl": "res://scenes/match/components/cards/huntress/card_huntress_prowl.gd",
+	"huntress_resilient": "res://scenes/match/components/cards/huntress/card_huntress_resilient.gd",
 }
 
 
