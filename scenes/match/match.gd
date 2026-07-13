@@ -223,6 +223,13 @@ func _on_defense_activated(skill : Skill) -> void:
 		defender.apply_status(status.status_id, status.stacks)
 	for status in defense.inflict_on_opponent:
 		attacker.apply_status(status.status_id, status.stacks)
+	# Countermeasures-style prevention shaves the announced attack down
+	# before it lands (attack and defense resolve together, 1.6).
+	if _pending_attack != null and defense.prevent_damage > 0:
+		var before : int = _pending_attack.damage
+		_pending_attack.damage = maxi(before - defense.prevent_damage, 0)
+		print("[skills] defense prevented %d damage (%d -> %d)" % [
+				defense.prevent_damage, before, _pending_attack.damage])
 	_resolve_pending_attack()
 	_end_phase_networked()
 
@@ -264,14 +271,21 @@ func _on_skill_chosen(skill : Skill) -> void:
 		player.apply_status(status.status_id, status.stacks)
 	if skill_effect.heal_companion > 0 and player.companion != null:
 		player.companion.heal(skill_effect.heal_companion)
+	if skill_effect.draw_cards > 0:
+		await deck_and_hand.draw_cards(skill_effect.draw_cards)
+	# Limit changes and max-outs must work from an empty board too (Higher
+	# Ground grants max TA whether or not the player already holds any):
+	# create the token at 0 stacks when it's missing.
 	for status_id in skill_effect.stack_limit_delta:
 		var token : StatusEffect = player.get_status(status_id)
-		if token != null:
-			token.stack_limit += int(skill_effect.stack_limit_delta[status_id])
+		if token == null:
+			token = player.apply_status(status_id, 0)
+		token.stack_limit += int(skill_effect.stack_limit_delta[status_id])
 	for status_id in skill_effect.max_out_self:
 		var token : StatusEffect = player.get_status(status_id)
-		if token != null:
-			token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
+		if token == null:
+			token = player.apply_status(status_id, 0)
+		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
 	# The target-requiring remainder is the Attack: it waits for the
 	# defensive phase (1.6). TODO(netcode): announce the activation to the
 	# defender's client.
@@ -288,9 +302,17 @@ func _on_skill_chosen(skill : Skill) -> void:
 			skill_effect.stack_limit_delta, skill_effect.max_out_self,
 			_pending_attack != null])
 	# Announcing the ability concludes the roll window: on to targeting /
-	# defensive without needing a Next Phase press.
+	# defensive without needing a Next Phase press — unless the effect grants
+	# an additional Offensive Roll Phase (Profiteer's medal branch): same
+	# window, fresh roll session, new pick.
 	if turn_manager.phase == TurnManager.Phase.OFFENSIVE:
-		_end_phase_networked()
+		if skill_effect.extra_offensive_phase:
+			print("[skills] extra offensive roll phase granted")
+			dice_roller.clear_result()
+			offensive_roll = []
+			_run_offensive_roll()
+		else:
+			_end_phase_networked()
 
 
 func _on_next_phase_pressed() -> void:
