@@ -81,6 +81,31 @@ func draw_cards(amount : int) -> void:
 	draw_button.disabled = false
 
 
+## A character's default deck as a deck CODE (the "id,id,..." hash format
+## Deck saves and loads): every common card plus the character's own cards,
+## one copy each. This is the stand-in deck source until the deck-building /
+## deck-selection feature exists — that feature will hand the match the
+## player's saved code instead, and nothing downstream changes.
+static func character_deck_code(char_id : String) -> String:
+	var ids : Array[String] = []
+	for id in GameDataLoader.card_repository:
+		var entry : Dictionary = GameDataLoader.card_repository[id]
+		if entry.get("type", "") == "common" or entry.get("character_id") == char_id:
+			ids.append(id)
+	ids.sort()
+	return ",".join(ids)
+
+
+## Match setup: replaces the debug deck built in _ready with the deck the
+## combatant brings to this match, given as its deck code/hash. Clears any
+## leftover discard state and shuffles the fresh pile.
+func initialize_deck(deck_code : String) -> void:
+	discard_pile.clear()
+	deck.construct_from_hash(deck_code)
+	deck.shuffle()
+	_update_pile_count()
+
+
 func _reshuffle_discard_into_deck() -> void:
 	deck.construct_from_hash(",".join(discard_pile))
 	discard_pile.clear()

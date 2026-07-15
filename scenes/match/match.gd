@@ -15,6 +15,7 @@ const INCOME_CP := 1
 @onready var opponent_skill_layout : SkillLayout = $Opponent/SkillLayout
 @onready var dice_roller : Control = $DiceRolling
 @onready var deck_and_hand : Control = $Player/DeckAndHand
+@onready var match_sync : MatchSync = $MatchSync
 
 ## The recorded result of this turn's offensive roll (raw face values).
 var offensive_roll : Array[int] = []
@@ -22,7 +23,13 @@ var offensive_roll : Array[int] = []
 var defensive_roll : Array[int] = []
 ## The announced Offensive Ability's target-requiring remainder (damage +
 ## inflictions), carried from the offensive roll into the defensive phase.
+## On the DEFENDER's client this is the incoming attack (rebuilt from the
+## attacker's announce); solo keeps it on the attacker's own client.
 var _pending_attack : SkillEffect = null
+## Attacker's client (multiplayer): an attack has been announced and we're
+## waiting for the defender to resolve it — they own the DEFENSIVE window and
+## drive it to MAIN_TWO. Solo never sets this (it uses _pending_attack).
+var _awaiting_defense : bool = false
 
 
 func _ready() -> void:
@@ -41,12 +48,130 @@ func _ready() -> void:
 	# immediately, player first, when the scene runs without a lobby).
 
 
+# --- playtest character assignment ------------------------------------------------
+# No character-selection scene yet: MatchSync assigns the lobby host the
+# tactician and the guest the huntress (host = tactician on both clients'
+# mirrored views), calling in here once the tree is ready.
+
+const LAYOUT_SCENES := {
+	"tactician": "res://scenes/match/components/skills/Tactician/tactician_skill_layout.tscn",
+	"huntress": "res://scenes/match/components/skills/Huntress/huntress_skill_layout.tscn",
+}
+const HEALTH_BAR_SCENE := "res://scenes/match/components/health_bar/health_bar.tscn"
+
+
+## Gives each side its character: the right skill board (all slots at stage
+## 0), each combatant's deck, and — for the huntress side — Nyra plus her HP
+## bar (limit 7, same bar as the players').
+##
+## Decks initialize from a deck code/hash ("id,id,..."). The optional
+## parameters are the placeholder for the future deck-building/selection
+## feature: pass the players' saved codes there; empty falls back to the
+## character's default playtest deck (all commons + the character's cards,
+## one copy each).
+func assign_characters(player_char : String, opponent_char : String,
+		player_deck_code : String = "", opponent_deck_code : String = "") -> void:
+	player_skill_layout = _swap_layout(player, player_skill_layout, player_char)
+	opponent_skill_layout = _swap_layout(opponent, opponent_skill_layout, opponent_char)
+	deck_and_hand.skill_layout = player_skill_layout
+	_setup_companion(player, player_char)
+	_setup_companion(opponent, opponent_char)
+	if player_deck_code.is_empty():
+		player_deck_code = deck_and_hand.character_deck_code(player_char)
+	if opponent_deck_code.is_empty():
+		opponent_deck_code = deck_and_hand.character_deck_code(opponent_char)
+	deck_and_hand.initialize_deck(player_deck_code)
+	# The deck's composition is public knowledge (only its order is private),
+	# so the mirror's pile counter starts at the opponent's real deck size.
+	opponent.set_deck_count(opponent_deck_code.split(",").size())
+	print("[match] characters assigned: player=%s opponent=%s" % [player_char, opponent_char])
+
+
+# Replaces a side's skill board with `char_id`'s layout scene in the same box
+# (anchors, offsets, rotation — the opponent's board is turned 180°). Keeps
+# the node when the placeholder already is that character. The fresh board
+# inherits the placeholder's name, visibility and the skill_chosen wiring.
+func _swap_layout(side : Combatant, current : SkillLayout, char_id : String) -> SkillLayout:
+	if current.character == char_id:
+		return current
+	var fresh : SkillLayout = (load(LAYOUT_SCENES[char_id]) as PackedScene).instantiate()
+	var slot_name := current.name
+	current.name = slot_name + "_replaced"
+	fresh.name = slot_name
+	side.add_child(fresh)
+	side.move_child(fresh, current.get_index())
+	fresh.set_anchors_preset(Control.PRESET_TOP_LEFT)   # clear instance defaults
+	fresh.anchor_left = current.anchor_left
+	fresh.anchor_top = current.anchor_top
+	fresh.anchor_right = current.anchor_right
+	fresh.anchor_bottom = current.anchor_bottom
+	fresh.offset_left = current.offset_left
+	fresh.offset_top = current.offset_top
+	fresh.offset_right = current.offset_right
+	fresh.offset_bottom = current.offset_bottom
+	fresh.grow_horizontal = current.grow_horizontal
+	fresh.grow_vertical = current.grow_vertical
+	fresh.rotation = current.rotation
+	fresh.visible = current.visible
+	fresh.skill_chosen.connect(_on_skill_chosen)
+	current.queue_free()
+	return fresh
+
+
+# The huntress side gets Nyra (ACTIVE at 5/7) and her HP bar; other
+# characters have no companion and this is a no-op.
+func _setup_companion(side : Combatant, char_id : String) -> void:
+	var companion := Companion.create_for_character(char_id)
+	if companion == null:
+		return
+	side.add_child(companion)
+	side.companion = companion
+	_add_companion_bar(side, companion)
+
+
+# Nyra's HP bar: the players' health bar scene reused at companion scale,
+# sitting to the right of the side's resource bars (Player = bottom band,
+# Opponent = top band), with a name/HP/state label.
+func _add_companion_bar(side : Combatant, companion : Companion) -> void:
+	var wrapper := Control.new()
+	wrapper.name = "CompanionBar"
+	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	side.add_child(wrapper)
+	if side == player:
+		wrapper.anchor_top = 0.994
+		wrapper.anchor_bottom = 0.994
+		wrapper.offset_top = -125.0
+	else:
+		wrapper.anchor_top = 0.006
+		wrapper.anchor_bottom = 0.006
+		wrapper.offset_top = 10.0
+	wrapper.offset_left = 750.0
+	wrapper.offset_right = 1150.0
+	wrapper.offset_bottom = wrapper.offset_top + 50.0
+
+	var bar : TextureProgressBar = (load(HEALTH_BAR_SCENE) as PackedScene).instantiate()
+	bar.scale = Vector2(0.45, 0.45)
+	wrapper.add_child(bar)
+	bar.track_companion(companion)
+
+	var label := Label.new()
+	label.position = Vector2(310.0, 12.0)
+	wrapper.add_child(label)
+	var refresh := func(_arg = null) -> void:
+		label.text = "%s  %d / %d%s" % [companion.companion_name, companion.hp,
+				companion.max_hp, "" if companion.is_active() else "  (DOWNED)"]
+	companion.health_changed.connect(refresh)
+	companion.state_changed.connect(refresh)
+	refresh.call()
+
+
 # Only the active side's skill board is on screen: they occupy the same
 # centre-of-board space, so they swap with the turn.
 func _on_turn_started(active : Combatant) -> void:
 	player_skill_layout.visible = active == player
 	opponent_skill_layout.visible = active == opponent
-	_pending_attack = null   # nothing announced yet this turn
+	_pending_attack = null       # nothing announced yet this turn
+	_awaiting_defense = false
 
 
 func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
@@ -113,15 +238,26 @@ func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
 			# player picks which opponent the attack lands on.
 			pass
 		TurnManager.Phase.DEFENSIVE:
-			# Interactive — the DEFENDER's window (1.6). No announced attack:
-			# the attacker skips the phase outright. With one, the defender's
-			# side runs the defensive roll flow (the attacker's client just
-			# waits). TODO(netcode): the attack announcement isn't replicated
-			# yet, so in multiplayer the defender client can't know about it.
-			if _pending_attack == null:
-				if active == player or _is_solo():
+			# Interactive — the DEFENDER's window (1.6). The attacker announces
+			# the attack (multiplayer) so it lands here on the defender's own
+			# client, which resolves it against itself and drives the phase to
+			# MAIN_TWO. The attacker just waits it out.
+			if _is_solo():
+				# Local demo: one client runs both sides off _pending_attack.
+				if _pending_attack != null:
+					_run_defensive_roll()
+				else:
 					_end_phase_networked()
-			elif active != player or _is_solo():
+			elif active == player:
+				# Attacker's client: wait for the defender to resolve an
+				# announced attack; with nothing out, there's no defense to
+				# wait for, so pass the phase.
+				if not _awaiting_defense:
+					_end_phase_networked()
+			elif _pending_attack != null:
+				# Defender's client: an announced attack is incoming — roll to
+				# defend. (No incoming attack: nothing to do; the attacker
+				# passes the phase for both sides.)
 				_run_defensive_roll()
 		TurnManager.Phase.MAIN_TWO:
 			# Interactive. Second play window (1.7), same rules as MAIN_ONE.
@@ -212,17 +348,29 @@ func _on_defense_activated(skill : Skill) -> void:
 	var defense : SkillEffect = await skill.activate(ctx)
 	print("[skills] defense activated: %s | roll %s | counter %d | companion heal %d" % [
 			skill.skill_id, defensive_roll, defense.damage, defense.heal_companion])
-	if defense.damage > 0:
-		if attacker == player:
-			(player as Player).update_player_health(-defense.damage)
-		else:
-			(opponent as Opponent).on_opponent_health(opponent.health - defense.damage)
+	# Self-facing effects apply on this (the defender's) client directly.
 	if defense.heal_companion > 0 and defender.companion != null:
 		defender.companion.heal(defense.heal_companion)
 	for status in defense.grant_to_self:
 		defender.apply_status(status.status_id, status.stacks)
-	for status in defense.inflict_on_opponent:
-		attacker.apply_status(status.status_id, status.stacks)
+	# Attacker-facing effects (counter damage + inflictions): solo applies them
+	# here; multiplayer announces them to the real attacker, who applies them on
+	# their own client (and broadcasts the resulting HP back to our mirror).
+	if _is_solo():
+		if defense.damage > 0:
+			if attacker == player:
+				(player as Player).update_player_health(-defense.damage)
+			else:
+				(opponent as Opponent).on_opponent_health(opponent.health - defense.damage)
+		for status in defense.inflict_on_opponent:
+			attacker.apply_status(status.status_id, status.stacks)
+	else:
+		var counter_ids : Array = []
+		var counter_stacks : Array = []
+		for status in defense.inflict_on_opponent:
+			counter_ids.append(status.status_id)
+			counter_stacks.append(status.stacks)
+		match_sync.announce_defense_result(defense.damage, defense.undefendable, counter_ids, counter_stacks)
 	# Countermeasures-style prevention shaves the announced attack down
 	# before it lands (attack and defense resolve together, 1.6).
 	if _pending_attack != null and defense.prevent_damage > 0:
@@ -249,6 +397,38 @@ func _resolve_pending_attack() -> void:
 		else:
 			(opponent as Opponent).on_opponent_health(opponent.health - _pending_attack.damage)
 	_pending_attack = null
+
+
+# --- networked combat resolution (multiplayer) ------------------------------------
+# The attack is computed on the attacker's client but resolved on the
+# DEFENDER's — each client stays authoritative over its own HP, and the
+# resulting absolute values converge via the existing health broadcasts. Both
+# receivers derive their side from the turn state (the caller is always the
+# other combatant).
+
+## Defender's client: the attacker announced their attack. Rebuild it as a
+## pending attack so the normal DEFENSIVE flow resolves it against this side
+## (defend to reduce/counter it, or eat it undefended into MAIN_TWO).
+func receive_incoming_attack(damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	var effect := SkillEffect.new()
+	effect.damage = damage
+	effect.undefendable = undefendable
+	for i in status_ids.size():
+		effect.inflict_on_opponent.append(StatusEffect.new(status_ids[i], int(status_stacks[i])))
+	_pending_attack = effect
+	print("[match] incoming attack announced: %d damage, %d status(es)" % [damage, status_ids.size()])
+
+
+## Attacker's client: the defender's defense resolved. Apply its
+## attacker-facing results — counter damage and inflicted statuses — to our own
+## (the attacker's) side; the HP change broadcasts back as an absolute.
+func receive_defense_result(counter_damage : int, _undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	_awaiting_defense = false
+	if counter_damage > 0:
+		(player as Player).update_player_health(-counter_damage)
+	for i in status_ids.size():
+		player.apply_status(status_ids[i], int(status_stacks[i]))
+	print("[match] defense result: %d counter damage taken, %d status(es)" % [counter_damage, status_ids.size()])
 
 
 func _on_skill_chosen(skill : Skill) -> void:
@@ -287,20 +467,31 @@ func _on_skill_chosen(skill : Skill) -> void:
 			token = player.apply_status(status_id, 0)
 		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
 	# The target-requiring remainder is the Attack: it waits for the
-	# defensive phase (1.6). TODO(netcode): announce the activation to the
-	# defender's client.
-	if skill_effect.damage > 0 or not skill_effect.inflict_on_opponent.is_empty():
-		_pending_attack = skill_effect
+	# defensive phase (1.6). Solo keeps it locally; multiplayer announces it
+	# to the defender, who owns the DEFENSIVE window and resolves it against
+	# their own (authoritative) side.
+	var attack_out := skill_effect.damage > 0 or not skill_effect.inflict_on_opponent.is_empty()
+	if attack_out:
+		if _is_solo():
+			_pending_attack = skill_effect
+		else:
+			_awaiting_defense = true
+			var ids : Array = []
+			var stacks : Array = []
+			for status in skill_effect.inflict_on_opponent:
+				ids.append(status.status_id)
+				stacks.append(status.stacks)
+			match_sync.announce_attack(skill_effect.damage, skill_effect.undefendable, ids, stacks)
 	var self_ids : Array[String] = []
 	for status in skill_effect.grant_to_self:
 		self_ids.append("%s x%d" % [status.status_id, status.stacks])
 	var inflict_ids : Array[String] = []
 	for status in skill_effect.inflict_on_opponent:
 		inflict_ids.append("%s x%d" % [status.status_id, status.stacks])
-	print("[skills] activated: %s | damage %d | self %s | inflict %s | limit deltas %s | max out %s | attack pending: %s" % [
+	print("[skills] activated: %s | damage %d | self %s | inflict %s | limit deltas %s | max out %s | attack out: %s" % [
 			skill.skill_id, skill_effect.damage, self_ids, inflict_ids,
 			skill_effect.stack_limit_delta, skill_effect.max_out_self,
-			_pending_attack != null])
+			attack_out])
 	# Announcing the ability concludes the roll window: on to targeting /
 	# defensive without needing a Next Phase press — unless the effect grants
 	# an additional Offensive Roll Phase (Profiteer's medal branch): same

@@ -20,6 +20,16 @@ extends Node
 
 const READY_KEY := "match_ready"
 
+## Playtest character split: the lobby host plays the tactician, the guest
+## the huntress (no character-selection scene yet).
+const HOST_CHARACTER := "tactician"
+const GUEST_CHARACTER := "huntress"
+
+## Standalone testing override: set to "huntress"/"tactician" (before the
+## scene enters the tree) to play that character in the solo demo instead of
+## the host default.
+@export var debug_local_character : String = ""
+
 @onready var player : Player = $"../Player"
 @onready var opponent : Opponent = $"../Opponent"
 @onready var turn_manager : TurnManager = $"../TurnManager"
@@ -29,6 +39,12 @@ var _started : bool = false
 
 
 func _ready() -> void:
+	# The scene root readies LAST: hold until match.gd's _ready has run (its
+	# node refs + signal wiring exist) before assigning characters or starting
+	# the solo turn loop.
+	if not owner.is_node_ready():
+		await owner.ready
+
 	# Receiver whitelist: GD-Sync's protection mode blocks remote calls into
 	# anything not exposed. Exposure is receiver-side — we expose what the
 	# OTHER client is allowed to invoke here.
@@ -37,8 +53,11 @@ func _ready() -> void:
 	GDSync.expose_func(opponent.on_opponent_sold)
 	GDSync.expose_func(opponent.on_opponent_health)
 	GDSync.expose_func(opponent.on_opponent_cp)
+	GDSync.expose_func(opponent.on_opponent_companion)
 	GDSync.expose_func(turn_manager.end_phase)
 	GDSync.expose_func(_remote_match_start)
+	GDSync.expose_func(_remote_incoming_attack)
+	GDSync.expose_func(_remote_defense_result)
 
 	# Outward wiring: the local Player's public events land on the remote
 	# client's Opponent node (same path over there = their view of us).
@@ -50,9 +69,18 @@ func _ready() -> void:
 
 	deck_and_hand.turn_manager = turn_manager   # phase-gate card drops
 
+	var solo := GDSync.lobby_get_player_count() < 2
+	_assign_characters(solo)
+
+	# Nyra's HP is public info: the huntress side's client owns her state and
+	# broadcasts absolutes; the other client renders them on its mirror.
+	if player.companion != null:
+		player.companion.health_changed.connect(_broadcast_companion)
+		player.companion.state_changed.connect(_broadcast_companion)
+
 	# No second client (scene run standalone / lobby lost): play locally, the
 	# Next Phase button drives both sides like before.
-	if GDSync.lobby_get_player_count() < 2:
+	if solo:
 		_start_match(true)
 		return
 
@@ -62,6 +90,22 @@ func _ready() -> void:
 	GDSync.player_data_changed.connect(_on_player_data_changed)
 	GDSync.player_set_data(READY_KEY, true)
 	_check_all_ready()   # the other client may have been ready before us
+
+
+# Playtest character split (host = tactician, guest = huntress). Solo runs /
+# lost lobbies count as hosting; debug_local_character overrides the local
+# pick for standalone testing. The remote client computes the same split from
+# its own is_host(), so both mirrored views agree without any message.
+func _assign_characters(solo : bool) -> void:
+	var local_char : String
+	if not debug_local_character.is_empty():
+		local_char = debug_local_character
+	elif solo or GDSync.is_host():
+		local_char = HOST_CHARACTER
+	else:
+		local_char = GUEST_CHARACTER
+	var remote_char := GUEST_CHARACTER if local_char == HOST_CHARACTER else HOST_CHARACTER
+	owner.assign_characters(local_char, remote_char)
 
 
 # --- match start ----------------------------------------------------------------
@@ -133,3 +177,35 @@ func _broadcast_card_sold(slot : int, _card_id : String) -> void:
 
 func _broadcast_cards_drawn(count : int) -> void:
 	GDSync.call_func(opponent.on_opponent_drew, count)
+
+
+# One signature for both companion signals (health_changed's int and
+# state_changed's State): the broadcast always sends the full absolute pair.
+func _broadcast_companion(_arg = null) -> void:
+	GDSync.call_func(opponent.on_opponent_companion,
+			player.companion.hp, player.companion.state)
+
+
+# --- combat announce (attacker <-> defender) ------------------------------------
+# The receivers live here (stable Match/MatchSync path on both clients) and
+# delegate to the match's resolution logic. call_func lands on the remote's
+# MatchSync — a "same node, both clients" call, not a mirrored one; match.gd
+# derives which side we are from the turn state.
+
+## match.gd (attacker) -> the defender's client: the announced attack payload.
+func announce_attack(damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	GDSync.call_func(_remote_incoming_attack, damage, undefendable, status_ids, status_stacks)
+
+
+func _remote_incoming_attack(damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	owner.receive_incoming_attack(damage, undefendable, status_ids, status_stacks)
+
+
+## match.gd (defender) -> the attacker's client: the defense's attacker-facing
+## payload (counter damage + inflicted statuses).
+func announce_defense_result(counter_damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	GDSync.call_func(_remote_defense_result, counter_damage, undefendable, status_ids, status_stacks)
+
+
+func _remote_defense_result(counter_damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
+	owner.receive_defense_result(counter_damage, undefendable, status_ids, status_stacks)

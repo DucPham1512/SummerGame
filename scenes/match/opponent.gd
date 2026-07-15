@@ -115,6 +115,23 @@ func on_opponent_cp(new_cp : int) -> void:
 	cp_changed.emit(cp)
 
 
+## The opponent's companion (Nyra) changed: absolute replicated hp + state.
+## No-op when this opponent's character has no companion — the receiver must
+## exist on both clients for the mirrored-path call to resolve.
+func on_opponent_companion(hp : int, state : int) -> void:
+	if companion == null:
+		return
+	companion.sync_state(hp, state as Companion.State)
+
+
+## Match setup: the real size of the opponent's deck (its composition is
+## public — every common card plus their character's cards — only the order
+## is private).
+func set_deck_count(count : int) -> void:
+	_deck_count = count
+	pile_count.text = str(_deck_count)
+
+
 # A face-down stand-in: a bare base card with no id — it renders the template
 # and, in this non-interactive hand, ignores the mouse entirely.
 func _add_hidden_card() -> void:

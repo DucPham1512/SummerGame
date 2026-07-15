@@ -68,3 +68,14 @@ func heal(amount : int) -> void:
 	if state == State.DOWNED and hp >= activation_hp:
 		state = State.ACTIVE
 		state_changed.emit(state)
+
+
+## Netcode receiver path: absolute replicated values from the owning client.
+## State comes along explicitly — hp alone can't distinguish a partial heal
+## (still DOWNED) from never having been downed.
+func sync_state(new_hp : int, new_state : State) -> void:
+	hp = clampi(new_hp, 0, max_hp)
+	health_changed.emit(hp)
+	if state != new_state:
+		state = new_state
+		state_changed.emit(state)
