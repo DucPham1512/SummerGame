@@ -1,0 +1,48 @@
+{
+  "_schema": "status_effect",
+  "_notes": "Catalogue of all status effects / tokens. Loaded from JSON at runtime. JSON holds values (stack_limit) and display text; behaviour is implemented in code and referenced via the status effect 'id'. Runtime state (whether an effect is active during a match, and current stack counts) is managed in memory by the game system, NOT stored here. 'stack_limit' is the base maximum stacks a player can hold; dynamic increases (e.g. Tactical Advantage surplus on ultimate usage) are handled in code. 'transferable' indicates whether the effect/token can be passed to or placed on another player.",
+  "status_effects": [
+    {
+      "id": "tactical_advantage",
+      "name": "Tactical Advantage",
+      "description": "A player holding these tokens may spend them at any time to activate effects: 1 token: gain 1 CP, or re-roll 1 of your dice at any time. 3 tokens: draw 1 card, or inflict Targeted on a chosen opponent. 4 tokens: a chosen player gains Protect, or transfer one status effect from any player to any player (Main Phase only).",
+      "stack_limit": 5,
+      "transferable": true
+    },
+    {
+      "id": "constrict",
+      "name": "Constrict",
+      "description": "During their next Offensive Roll Phase, a player affected by this token must pay 1 CP for each additional roll attempt after their first. Remove this token at the conclusion of the Roll Phase.",
+      "stack_limit": 1,
+      "transferable": true
+    },
+    {
+      "id": "targeted",
+      "name": "Targeted",
+      "description": "When a player affected by this token is attacked by an opponent, the attacker deals +2 attack damage.",
+      "stack_limit": 1,
+      "transferable": true
+    },
+    {
+      "id": "protect",
+      "name": "Protect",
+      "description": "A player with this token may spend it at any time to prevent 1/2 incoming damage (rounded up).",
+      "stack_limit": 1,
+      "transferable": true
+    },
+    {
+      "id": "nyras_bond",
+      "name": "Nyra's Bond",
+      "description": "If the Huntress is attacked while Nyra is active, she may spend this token to freely distribute the attack's damage between the Huntress and Nyra. Alternatively, spend this token at any time to heal Nyra by 2 HP.",
+      "stack_limit": 1,
+      "transferable": true
+    },
+    {
+      "id": "bleed",
+      "name": "Bleed",
+      "description": "A player afflicted with this token must roll 1 die during their Upkeep Phase. On 1-4, they take 1 undefendable damage. On 5-6, remove this token.",
+      "stack_limit": 2,
+      "transferable": true
+    }
+  ]
+}

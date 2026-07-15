@@ -1,0 +1,36 @@
+[gd_scene format=3 uid="uid://cj2t7brfnrwbi"]
+
+[ext_resource type="Script" uid="uid://dxmgabhsnmr7d" path="res://scenes/match/components/hand/hand.gd" id="1_xswvv"]
+
+[node name="Hand" type="Control" unique_id=170794113]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_xswvv")
+card_size = Vector2(125, 187.5)
+card_spacing = 110.0
+bottom_margin = 40.0
+
+[node name="AddCard" type="Button" parent="." unique_id=1026575123]
+layout_mode = 0
+offset_left = 891.0
+offset_top = 142.0
+offset_right = 966.0
+offset_bottom = 185.0
+text = "Add
+"
+
+[node name="RemoveCard" type="Button" parent="." unique_id=174246354]
+layout_mode = 0
+offset_left = 476.0
+offset_top = 88.0
+offset_right = 536.0
+offset_bottom = 136.0
+text = "Remove
+"
+
+[connection signal="pressed" from="AddCard" to="." method="_on_add_card_pressed"]
+[connection signal="pressed" from="RemoveCard" to="." method="_on_remove_card_pressed"]

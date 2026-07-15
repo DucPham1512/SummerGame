@@ -1,0 +1,57 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+container: barichello/godot-ci:4.6.3
+
+variables:
+  - name: exportName
+    value: 'SummerGame'
+  - name: buildDir
+    value: 'build/windows'
+
+steps:
+  - checkout: self
+
+  - script: |
+      mkdir -v -p $(buildDir)
+    displayName: 'Create build directory'
+
+  - script: |
+      godot -v --headless --export-release "Windows Desktop" $(buildDir)/$(exportName).exe --path .
+    displayName: 'Export Windows build (release)'
+
+  - script: |
+      if [ ! -f "$(buildDir)/$(exportName).exe" ]; then
+        echo "##vso[task.logissue type=error]Export failed: $(exportName).exe not found"
+        exit 1
+      fi
+      if [ ! -f "$(buildDir)/$(exportName).pck" ]; then
+        echo "##vso[task.logissue type=error]Export failed: $(exportName).pck not found"
+        exit 1
+      fi
+      echo "Build output:"
+      ls -lh $(buildDir)
+    displayName: 'Verify export output'
+
+  - task: ArchiveFiles@2
+    displayName: 'Zip build output'
+    inputs:
+      rootFolderOrFile: '$(buildDir)'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(exportName)-$(Build.BuildId).zip'
+      replaceExistingArchive: true
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish to Azure Artifacts'
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+      ArtifactName: 'windows-build'
+      publishLocation: 'Container'

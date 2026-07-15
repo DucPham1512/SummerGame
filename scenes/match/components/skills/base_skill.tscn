@@ -1,0 +1,45 @@
+[gd_scene format=3 uid="uid://lm2vep6tv5to"]
+
+[ext_resource type="Script" uid="uid://t4dj43k4x13r" path="res://scenes/match/components/skills/skills.gd" id="1_hgsk7"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_hgsk7"]
+
+[node name="BaseSkill" type="Control" unique_id=328385364]
+layout_mode = 3
+anchor_right = 0.16666667
+anchor_bottom = 0.4074074
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hgsk7")
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="." unique_id=2066332448]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SkillName" type="Label" parent="Panel" unique_id=1025616281]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -41.0
+offset_top = 15.0
+offset_right = 41.0
+offset_bottom = 38.0
+grow_horizontal = 2
+text = "Skill Name"
+label_settings = SubResource("LabelSettings_hgsk7")
+
+[node name="SkillDescription" type="TextureRect" parent="Panel" unique_id=906534866]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

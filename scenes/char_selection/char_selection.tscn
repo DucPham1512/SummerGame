@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://cv7m0s18p2nn0"]
+
+[ext_resource type="Script" uid="uid://duwal4gy4nfrs" path="res://scenes/char_selection/char_selection.gd" id="1_8nocd"]
+[ext_resource type="PackedScene" uid="uid://2a4n7i53k6js" path="res://scenes/match/match.tscn" id="2_1audw"]
+
+[node name="CharSelection" type="Control" unique_id=214867433]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = -4.0
+offset_right = 4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8nocd")
+Match = ExtResource("2_1audw")
+
+[node name="Label" type="Label" parent="." unique_id=223567851]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 28.0
+offset_right = 1014.0
+offset_bottom = 148.0
+theme_override_font_sizes/font_size = 50
+text = "Character Selection"
+horizontal_alignment = 1
+
+[node name="ToMatch" type="Button" parent="." unique_id=293032382]
+layout_mode = 0
+offset_left = 396.0
+offset_top = 204.0
+offset_right = 744.0
+offset_bottom = 464.0
+theme_override_font_sizes/font_size = 30
+text = "Match Start
+"
+
+[connection signal="button_down" from="ToMatch" to="." method="_on_to_match_button_down"]

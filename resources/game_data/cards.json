@@ -1,0 +1,493 @@
+{
+  "_schema": "card",
+  "_notes": "Catalogue of all cards, both common and character-specific. Loaded from JSON at runtime. JSON holds values (cp_cost, max_copies) and display text; card behaviour is implemented in code and referenced via the card 'id'. 'character_id' is null for common cards, or references character.id for character-specific cards. 'phase_subtype' only applies when phase is 'roll_phase' (offensive/defensive/any); it is null otherwise. 'max_copies' is omitted to use the global limit from game_config.json; include it only to override with a lower value.",
+  "_enums": {
+    "type": ["common", "character"],
+    "phase": ["roll_phase", "instant_action", "main_phase"],
+    "phase_subtype": ["offensive", "defensive", "any"]
+  },
+  "cards": [
+    {
+      "id": "helping_hand",
+      "name": "Helping Hand",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 1,
+      "description": "Select one of your opponent's dice and force them to re-roll it."
+    },
+    {
+      "id": "samesies",
+      "name": "Samesies",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 1,
+      "description": "Change the value of one of your dice to be identical to the value of another one of your dice (that was rolled in the same phase and for the same purpose)."
+    },
+    {
+      "id": "twice_as_wild",
+      "name": "Twice As Wild",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 3,
+      "description": "Change the value of any two dice."
+    },
+    {
+      "id": "try_try_again",
+      "name": "Try, Try Again",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 1,
+      "description": "You or a chosen teammate may re-roll up to two dice (can be the same die twice in a row or two different dice)."
+    },
+    {
+      "id": "one_more_time",
+      "name": "One More Time",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "offensive",
+      "cp_cost": 1,
+      "description": "A chosen player may perform an additional Roll Attempt of up to five dice during their Offensive Roll Phase."
+    },
+    {
+      "id": "so_wild",
+      "name": "So Wild",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 2,
+      "description": "Change the value of any one die."
+    },
+    {
+      "id": "six_it",
+      "name": "Six-It",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 1,
+      "description": "Change the value of any one of your dice to a 6."
+    },
+    {
+      "id": "not_this_time",
+      "name": "Not This Time",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 1,
+      "description": "A chosen player prevents 6 incoming damage."
+    },
+    {
+      "id": "better_d",
+      "name": "Better D",
+      "type": "common",
+      "character_id": null,
+      "phase": "roll_phase",
+      "phase_subtype": "any",
+      "cp_cost": 0,
+      "description": "A chosen player may perform an additional Roll Attempt of up to five dice during their Defensive Roll Phase."
+    },
+    {
+      "id": "double_up",
+      "name": "Double Up",
+      "type": "common",
+      "character_id": null,
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Draw 2 cards."
+    },
+    {
+      "id": "buh_bye",
+      "name": "Buh, Bye",
+      "type": "common",
+      "character_id": null,
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Remove a status effect token from a chosen player."
+    },
+    {
+      "id": "triple_up",
+      "name": "Triple Up",
+      "type": "common",
+      "character_id": null,
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 3,
+      "description": "Draw 3 cards."
+    },
+    {
+      "id": "getting_paid",
+      "name": "Getting Paid",
+      "type": "common",
+      "character_id": null,
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 0,
+      "description": "Gain 2 combat points."
+    },
+    {
+      "id": "vegas_baby",
+      "name": "Vegas Baby",
+      "type": "common",
+      "character_id": null,
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 0,
+      "description": "Roll 1 die: gain 1/2 the value as Combat Points (rounded up)."
+    },
+    {
+      "id": "transference",
+      "name": "Transference",
+      "type": "common",
+      "character_id": null,
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Transfer 1 status effect token from a chosen player to another chosen player."
+    },
+    {
+      "id": "get_that_outa_here",
+      "name": "Get That Outa Here",
+      "type": "common",
+      "character_id": null,
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Remove a status effect token from a chosen player."
+    },
+    {
+      "id": "what_status_effects",
+      "name": "What Status Effects?",
+      "type": "common",
+      "character_id": null,
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Remove all status effect tokens from a chosen player."
+    },
+    {
+      "id": "tip_it",
+      "name": "Tip It!",
+      "type": "common",
+      "character_id": null,
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Increase or decrease any die by the value of 1 (a value of 1 cannot be decreased and a value of 6 cannot be increased)."
+    },
+
+    {
+      "id": "tactician_saber_strike_ii",
+      "name": "Saber Strike II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Upgrade skill Saber Strike to Saber Strike II."
+    },
+    {
+      "id": "tactician_carpet_bomb_ii",
+      "name": "Carpet Bomb II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Carpet Bomb to Carpet Bomb II."
+    },
+    {
+      "id": "tactician_profiteer_ii",
+      "name": "Profiteer II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Profiteer to Profiteer II."
+    },
+    {
+      "id": "tactician_strategic_approach_ii",
+      "name": "Strategic Approach II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Strategic Approach to Strategic Approach II."
+    },
+    {
+      "id": "tactician_flank_ii",
+      "name": "Flank II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Flank to Flank II."
+    },
+    {
+      "id": "tactician_maneuver_ii",
+      "name": "Maneuver II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Maneuver to Maneuver II."
+    },
+    {
+      "id": "tactician_exploit_ii",
+      "name": "Exploit II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Exploit to Exploit II."
+    },
+    {
+      "id": "tactician_countermeasures_ii",
+      "name": "Countermeasures II",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 3,
+      "description": "Upgrade skill Countermeasures to Countermeasures II."
+    },
+    {
+      "id": "tactician_countermeasures_iii",
+      "name": "Countermeasures III",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 5,
+      "description": "Upgrade skill Countermeasures to Countermeasures III."
+    },
+    {
+      "id": "tactician_upper_hand",
+      "name": "Upper Hand",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 0,
+      "description": "Roll 1 die: on Medal, gain 4 Tactical Advantage; on any other outcome, draw 1 card."
+    },
+    {
+      "id": "tactician_war_room",
+      "name": "War Room",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Roll 1 die: gain 1/2 the die value as Tactical Advantage (rounded up)."
+    },
+    {
+      "id": "tactician_bunker_up",
+      "name": "Bunker Up",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "A chosen player gains Protect."
+    },
+    {
+      "id": "tactician_disengage",
+      "name": "Disengage",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "roll_phase",
+      "phase_subtype": "defensive",
+      "cp_cost": 0,
+      "description": "Roll 1 die: on Saber, deal 2 damage to the attacker; on Flag, prevent 3 damage; on Medal, gain Protect. Play only after being attacked."
+    },
+    {
+      "id": "tactician_feigned_retreat",
+      "name": "Feigned Retreat",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "roll_phase",
+      "phase_subtype": "defensive",
+      "cp_cost": 2,
+      "description": "Inflict Constrict on your attacker and prevent 3 incoming damage. Play only after being attacked."
+    },
+    {
+      "id": "tactician_ambush",
+      "name": "Ambush",
+      "type": "character",
+      "character_id": "tactician",
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Gain 2 Tactical Advantage."
+    },
+
+    {
+      "id": "huntress_animalistic_ii",
+      "name": "Animalistic II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Animalistic to Animalistic II."
+    },
+    {
+      "id": "huntress_savage_ii",
+      "name": "Savage II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Savage to Savage II."
+    },
+    {
+      "id": "huntress_resuscitate_ii",
+      "name": "Resuscitate II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Resuscitate to Resuscitate II."
+    },
+    {
+      "id": "huntress_feral_instincts_ii",
+      "name": "Feral Instincts II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Feral Instincts to Feral Instincts II."
+    },
+    {
+      "id": "huntress_onslaught_ii",
+      "name": "Onslaught II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Onslaught to Onslaught II."
+    },
+    {
+      "id": "huntress_feral_ii",
+      "name": "Feral II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Feral to Feral II."
+    },
+    {
+      "id": "huntress_predatory_advance_ii",
+      "name": "Predatory Advance II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 2,
+      "description": "Upgrade skill Predatory Advance to Predatory Advance II."
+    },
+    {
+      "id": "huntress_maternal_bond_ii",
+      "name": "Maternal Bond II",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 3,
+      "description": "Upgrade skill Maternal Bond to Maternal Bond II."
+    },
+    {
+      "id": "huntress_maternal_bond_iii",
+      "name": "Maternal Bond III",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 4,
+      "description": "Upgrade skill Maternal Bond II to Maternal Bond III."
+    },
+    {
+      "id": "huntress_blood_bond",
+      "name": "Blood Bond",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Roll 3 dice: heal Nyra 1 HP, +1 for every Soul, +2 for every Tooth."
+    },
+    {
+      "id": "huntress_primal_roar",
+      "name": "Primal Roar",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 0,
+      "description": "Roll 1 die: on Tooth, heal Nyra 4 HP; on any other outcome, draw 1 card."
+    },
+    {
+      "id": "huntress_savage_slash",
+      "name": "Savage Slash",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "main_phase",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Choose a player and roll 1 die: on Claw or Tooth, inflict 2 Bleed; otherwise inflict 1 Bleed."
+    },
+    {
+      "id": "huntress_pounce",
+      "name": "Pounce",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "roll_phase",
+      "phase_subtype": "offensive",
+      "cp_cost": 0,
+      "description": "Roll 5 dice: add 1 damage for every Spear; on Claw, inflict Bleed. Attack modifier."
+    },
+    {
+      "id": "huntress_prowl",
+      "name": "Prowl",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "roll_phase",
+      "phase_subtype": "offensive",
+      "cp_cost": 0,
+      "description": "Roll 1 die: on Spear, add 1 damage; on Claw, add 2 damage; on Soul, heal Nyra 1 HP; on Tooth, add 3 damage. Attack modifier."
+    },
+    {
+      "id": "huntress_resilient",
+      "name": "Resilient",
+      "type": "character",
+      "character_id": "huntress",
+      "phase": "instant_action",
+      "phase_subtype": null,
+      "cp_cost": 1,
+      "description": "Gain Nyra's Bond."
+    }
+  ]
+}

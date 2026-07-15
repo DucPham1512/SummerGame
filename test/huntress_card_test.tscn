@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3 uid="uid://dhuntcardscn21"]
+
+[ext_resource type="Script" uid="uid://dhuntcardtst20" path="res://test/huntress_card_test.gd" id="1_hctest"]
+[ext_resource type="PackedScene" uid="uid://dhuntlayout02" path="res://scenes/match/components/skills/Huntress/huntress_skill_layout.tscn" id="2_hslay"]
+
+[node name="HuntressCardTest" type="Control" unique_id=1092837466]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_hctest")
+
+[node name="HuntressSkillLayout" parent="." unique_id=375170550 instance=ExtResource("2_hslay")]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.64
+anchor_bottom = 1.0

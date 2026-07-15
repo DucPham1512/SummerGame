@@ -1,0 +1,122 @@
+[gd_scene format=3 uid="uid://bqh3n2vpk7msc"]
+
+[ext_resource type="Script" uid="uid://dxk5rq83mv2lp" path="res://scenes/match/opponent.gd" id="1_opp01"]
+[ext_resource type="Script" uid="uid://dxmgabhsnmr7d" path="res://scenes/match/components/hand/hand.gd" id="2_hand1"]
+[ext_resource type="PackedScene" uid="uid://yxmv6od5462f" path="res://scenes/match/components/deck/deck.tscn" id="3_deck1"]
+[ext_resource type="PackedScene" uid="uid://ihku1ecf4lbu" path="res://scenes/match/components/health_bar/health_bar.tscn" id="4_hpbar"]
+[ext_resource type="PackedScene" uid="uid://c2ku853dw1scn" path="res://scenes/match/components/cp_bar/cp_bar.tscn" id="5_cpbar"]
+[ext_resource type="Shader" uid="uid://d2uvrmpom4at5" path="res://assets/shader/segmented_bar.gdshader" id="6_b5px6"]
+[ext_resource type="PackedScene" uid="uid://dtactlayout01" path="res://scenes/match/components/skills/Tactician/tactician_skill_layout.tscn" id="7_hpu3q"]
+
+[sub_resource type="Gradient" id="Gradient_ml4b2"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.3, 0.67, 1, 1, 0.04, 0.5, 0.9, 1, 0.14901961, 0.3882353, 0.9137255, 1)
+metadata/_snap_enabled = true
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_t3iw6"]
+gradient = SubResource("Gradient_ml4b2")
+
+[sub_resource type="Gradient" id="Gradient_y"]
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_y"]
+gradient = SubResource("Gradient_y")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_jtdxk"]
+resource_local_to_scene = true
+shader = ExtResource("6_b5px6")
+shader_parameter/stepify = true
+shader_parameter/value = 13.0
+shader_parameter/count = 15
+shader_parameter/margin = Vector2(0.15, 0.2)
+shader_parameter/shear_angle = -0.04299995454250005
+shader_parameter/gradient_x = SubResource("GradientTexture1D_t3iw6")
+shader_parameter/gradient_y = SubResource("GradientTexture1D_y")
+shader_parameter/use_value_gradient = false
+shader_parameter/invert = false
+
+[node name="Opponent" type="Control" unique_id=1093824657]
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 0.50617284
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_opp01")
+starting_hand_count = 0
+metadata/_edit_use_anchors_ = true
+
+[node name="OpponentHand" type="Control" parent="." unique_id=1352708441]
+layout_mode = 1
+anchor_right = 1.0
+anchor_bottom = 0.5
+grow_horizontal = 2
+script = ExtResource("2_hand1")
+placeholder_ids = Array[String]([])
+card_size = Vector2(150, 225)
+bottom_margin = 40.0
+interactive = false
+top_aligned = true
+
+[node name="Deck" parent="." unique_id=1770254893 instance=ExtResource("3_deck1")]
+layout_mode = 1
+anchor_left = 0.92949307
+anchor_top = 0.08558536
+anchor_right = 0.92949307
+anchor_bottom = 0.08558536
+offset_left = -107.776
+offset_top = 0.68463135
+offset_right = 60.224
+offset_bottom = 231.928
+
+[node name="OpponentResourceContainer" type="VBoxContainer" parent="." unique_id=1471520386]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.006
+anchor_bottom = 0.006
+offset_left = 30.0
+offset_top = 0.032
+offset_right = 734.0
+offset_bottom = 131.032
+
+[node name="HpContainer" type="HBoxContainer" parent="OpponentResourceContainer" unique_id=1918342750]
+layout_mode = 2
+
+[node name="HealthBar" parent="OpponentResourceContainer/HpContainer" unique_id=1204815326 node_paths=PackedStringArray("player") instance=ExtResource("4_hpbar")]
+layout_mode = 2
+texture_progress_offset = Vector2(53, 24)
+player = NodePath("../../..")
+
+[node name="HealthLabel" type="Label" parent="OpponentResourceContainer/HpContainer" unique_id=1673029584]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="CpContainer" type="HBoxContainer" parent="OpponentResourceContainer" unique_id=1560243178]
+layout_mode = 2
+
+[node name="CpBar" parent="OpponentResourceContainer/CpContainer" unique_id=1246803519 node_paths=PackedStringArray("player") instance=ExtResource("5_cpbar")]
+material = SubResource("ShaderMaterial_jtdxk")
+layout_mode = 2
+size_flags_horizontal = 3
+player = NodePath("../../..")
+
+[node name="CpLabel" type="Label" parent="OpponentResourceContainer/CpContainer" unique_id=1130259630]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayedCardSpot" type="Control" parent="." unique_id=1614772076]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.8
+anchor_right = 0.5
+anchor_bottom = 0.8
+
+[node name="SkillLayout" parent="." unique_id=375170549 instance=ExtResource("7_hpu3q")]
+layout_mode = 1
+anchors_preset = -1
+anchor_top = 0.57621926
+anchor_bottom = 1.5760001
+grow_horizontal = 2
+grow_vertical = 2
+rotation = 3.1415927
+metadata/_edit_use_anchors_ = true

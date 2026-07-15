@@ -21,3 +21,15 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Build output
+build/
+export_presets.cfg.bak
+
+# Godot-specific
+.godot/
+*.translation
+
+# OS/editor cruft
+.vscode/
+*.tmp

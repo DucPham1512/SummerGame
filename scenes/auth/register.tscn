@@ -1,0 +1,115 @@
+[gd_scene format=3 uid="uid://bln00ggcti6w0"]
+
+[ext_resource type="Script" uid="uid://cregrootlnk01" path="res://scenes/auth/register.gd" id="3_root"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ihx5i"]
+bg_color = Color(0.14901961, 0.14901961, 0.14901961, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[node name="Register" type="Control" unique_id=23222458]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_root")
+
+[node name="RegisterWindow" type="Panel" parent="." unique_id=1565361681]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -229.0
+offset_top = -163.0
+offset_right = 229.0
+offset_bottom = 163.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ihx5i")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="RegisterWindow" unique_id=398417153]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -172.5
+offset_top = -108.5
+offset_right = 172.5
+offset_bottom = 108.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MailContainer" type="HBoxContainer" parent="RegisterWindow/VBoxContainer" unique_id=560345385]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="MailLabel" type="RichTextLabel" parent="RegisterWindow/VBoxContainer/MailContainer" unique_id=47968286]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "E-Mail"
+
+[node name="MailInput" type="LineEdit" parent="RegisterWindow/VBoxContainer/MailContainer" unique_id=1124375144]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UserNameContainer" type="HBoxContainer" parent="RegisterWindow/VBoxContainer" unique_id=642528431]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="UsernameLabel" type="RichTextLabel" parent="RegisterWindow/VBoxContainer/UserNameContainer" unique_id=1210637618]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Username"
+
+[node name="UsernameInput" type="LineEdit" parent="RegisterWindow/VBoxContainer/UserNameContainer" unique_id=1239681426]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PasswordContainer" type="HBoxContainer" parent="RegisterWindow/VBoxContainer" unique_id=1548651279]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="PasswordLabel" type="RichTextLabel" parent="RegisterWindow/VBoxContainer/PasswordContainer" unique_id=1642412512]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Password"
+
+[node name="PasswordInput" type="LineEdit" parent="RegisterWindow/VBoxContainer/PasswordContainer" unique_id=1732918611]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RepeatPasswordContainer" type="HBoxContainer" parent="RegisterWindow/VBoxContainer" unique_id=364462463]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="RepeatPasswordLabel" type="RichTextLabel" parent="RegisterWindow/VBoxContainer/RepeatPasswordContainer" unique_id=457265088]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "Repeat Password"
+
+[node name="RepeatPasswordInput" type="LineEdit" parent="RegisterWindow/VBoxContainer/RepeatPasswordContainer" unique_id=1567807760]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RegisterButton" type="Button" parent="RegisterWindow/VBoxContainer" unique_id=849771419]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+text = "Register"
+
+[node name="CenterContainer" type="CenterContainer" parent="RegisterWindow/VBoxContainer" unique_id=1653334470]
+layout_mode = 2
+
+[node name="ReturnToLoginButton" type="LinkButton" parent="RegisterWindow/VBoxContainer/CenterContainer" unique_id=1526893277]
+layout_mode = 2
+text = "Login"
+
+[connection signal="pressed" from="RegisterWindow/VBoxContainer/RegisterButton" to="." method="_on_register_button_pressed"]
+[connection signal="pressed" from="RegisterWindow/VBoxContainer/CenterContainer/ReturnToLoginButton" to="." method="_on_return_to_login_button_pressed"]

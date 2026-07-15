@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://c2ku853dw1scn"]
+
+[ext_resource type="Shader" uid="uid://d2uvrmpom4at5" path="res://assets/shader/segmented_bar.gdshader" id="1_si06r"]
+[ext_resource type="Script" uid="uid://bpwygam0fggnw" path="res://scenes/match/components/cp_bar/cp_bar.gd" id="2_ml4b2"]
+
+[sub_resource type="Gradient" id="Gradient_ml4b2"]
+offsets = PackedFloat32Array(0, 0.5, 1)
+colors = PackedColorArray(0.3, 0.67, 1, 1, 0.04, 0.5, 0.9, 1, 0.14901961, 0.3882353, 0.9137255, 1)
+metadata/_snap_enabled = true
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_t3iw6"]
+gradient = SubResource("Gradient_ml4b2")
+
+[sub_resource type="Gradient" id="Gradient_y"]
+colors = PackedColorArray(0, 0, 0, 0, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_y"]
+gradient = SubResource("Gradient_y")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_0s0jq"]
+resource_local_to_scene = true
+shader = ExtResource("1_si06r")
+shader_parameter/stepify = true
+shader_parameter/value = 13.0
+shader_parameter/count = 15
+shader_parameter/margin = Vector2(0.15, 0.2)
+shader_parameter/shear_angle = -0.04299995454250005
+shader_parameter/gradient_x = SubResource("GradientTexture1D_t3iw6")
+shader_parameter/gradient_y = SubResource("GradientTexture1D_y")
+shader_parameter/use_value_gradient = false
+shader_parameter/invert = false
+
+[node name="CpBar" type="ColorRect" unique_id=1864032624]
+material = SubResource("ShaderMaterial_0s0jq")
+offset_right = 336.0
+offset_bottom = 32.0
+script = ExtResource("2_ml4b2")

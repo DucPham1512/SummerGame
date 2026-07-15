@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://b4houakmpsuyd"]
+
+[node name="CardCodex" type="Control" unique_id=582167691]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="." unique_id=1841418897]
+layout_mode = 0
+offset_right = 1152.0
+offset_bottom = 328.0
+text = "Char Codex"

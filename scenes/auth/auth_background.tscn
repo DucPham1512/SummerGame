@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://b5hrrprcs55gt"]
+
+[ext_resource type="Script" uid="uid://cojbc1l1sp87p" path="res://scenes/auth/auth_background.gd" id="1_ijqhi"]
+[ext_resource type="PackedScene" uid="uid://5q8e7bgj4h3q" path="res://scenes/auth/login.tscn" id="2_qvoxy"]
+[ext_resource type="PackedScene" uid="uid://bln00ggcti6w0" path="res://scenes/auth/register.tscn" id="3_wpq7e"]
+[ext_resource type="PackedScene" uid="uid://c102i1m3qajky" path="res://scenes/auth/verify.tscn" id="4_vrfy"]
+[ext_resource type="PackedScene" uid="uid://blw44ilh7rqct" path="res://scenes/common/main_client.tscn" id="5_main"]
+
+[node name="AuthBackground" type="Control" unique_id=854602298]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ijqhi")
+Login = ExtResource("2_qvoxy")
+Register = ExtResource("3_wpq7e")
+Verify = ExtResource("4_vrfy")
+MainScene = ExtResource("5_main")

@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cab8jmtvbewyo"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o1cf1"]
+bg_color = Color(0.7460643, 0.7251751, 0.72141063, 1)
+
+[node name="Profile" type="Control" unique_id=170185042]
+layout_mode = 3
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+metadata/_edit_use_anchors_ = true
+
+[node name="Panel" type="Panel" parent="." unique_id=1706546947]
+layout_mode = 0
+offset_left = 120.0
+offset_right = 304.0
+offset_bottom = 440.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_o1cf1")
+
+[node name="Panel2" type="Panel" parent="." unique_id=1607698528]
+layout_mode = 0
+offset_left = 640.0
+offset_top = 56.0
+offset_right = 960.0
+offset_bottom = 320.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_o1cf1")
+
+[node name="Label" type="Label" parent="." unique_id=678561452]
+layout_mode = 0
+offset_left = 704.0
+offset_top = 328.0
+offset_right = 912.0
+offset_bottom = 384.0
+text = "Master
+Elo:999"
+horizontal_alignment = 1

@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://mn7q5asr23w5"]
+
+[ext_resource type="Script" uid="uid://b0xbmbvvwanuu" path="res://scenes/match_result/match_result.gd" id="1_e05uy"]
+
+[node name="MatchResult" type="Control" unique_id=1206487364]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_e05uy")
+
+[node name="PlayAgainButton" type="Button" parent="." unique_id=1928903782]
+layout_mode = 0
+offset_left = 418.0
+offset_top = 230.0
+offset_right = 771.0
+offset_bottom = 445.0
+theme_override_font_sizes/font_size = 30
+text = "Play Again"
+
+[node name="Home" type="Button" parent="." unique_id=518544985]
+layout_mode = 0
+offset_left = 412.0
+offset_top = 34.0
+offset_right = 775.0
+offset_bottom = 202.0
+theme_override_font_sizes/font_size = 30
+text = "Home"
+
+[connection signal="button_down" from="PlayAgainButton" to="." method="_on_play_again_button_button_down"]
+[connection signal="button_down" from="Home" to="." method="_on_home_button_down"]

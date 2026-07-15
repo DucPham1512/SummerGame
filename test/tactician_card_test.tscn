@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bgot1jaka2jnc"]
+
+[ext_resource type="Script" uid="uid://dtactcardtst40" path="res://test/tactician_card_test.gd" id="1_tctest"]
+[ext_resource type="PackedScene" uid="uid://dtactlayout01" path="res://scenes/match/components/skills/Tactician/tactician_skill_layout.tscn" id="2_tslay"]
+
+[node name="TacticianCardTest" type="Control" unique_id=1092837468]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_tctest")
+
+[node name="TacticianSkillLayout" parent="." unique_id=375170552 instance=ExtResource("2_tslay")]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 0.64
+anchor_bottom = 1.0

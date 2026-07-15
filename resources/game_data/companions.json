@@ -1,0 +1,16 @@
+{
+  "_schema": "companion",
+  "_notes": "Each character's companion. One-to-one with character. Loaded from JSON at runtime. 'character_id' references character.id. 'resources' is a flexible pool (e.g. {\"hp\": 30}) so future companions can use non-HP resources without a schema change.",
+  "companions": [
+    {
+      "id": "huntress_companion",
+      "character_id": "huntress",
+      "name": "Nyra",
+      "description": "Queen of the forest, Huntress adoptive mother.",
+      "resources": { "max_hp": 7, 
+                    "start_hp": 5, 
+                    "recovery": 2, 
+                    "damage_amp": 2 }
+    }
+  ]
+}

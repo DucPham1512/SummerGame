@@ -1,0 +1,32 @@
+{
+  "_schema": "dice",
+  "_notes": "Dice belonging to a character. Each die has 6 faces (values 1-6). Face symbols and their grouping vary per character, so 'faces' maps each face value (1-6) to its symbol. Loaded from JSON at runtime. 'character_id' references character.id. 'name' is kept for readability/debugging.",
+  "dice": [
+    {
+      "id": "tactician_die",
+      "character_id": "tactician",
+      "name": "Tactician Die",
+      "faces": {
+        "1": "saber",
+        "2": "saber",
+        "3": "saber",
+        "4": "flag",
+        "5": "flag",
+        "6": "medal"
+      }
+    },
+    {
+      "id": "huntress_die",
+      "character_id": "huntress",
+      "name": "Huntress Die",
+      "faces": {
+        "1": "spear",
+        "2": "spear",
+        "3": "claw",
+        "4": "claw",
+        "5": "soul",
+        "6": "tooth"
+      }
+    }
+  ]
+}

@@ -1,0 +1,416 @@
+{
+  "_schema": "ability",
+  "_notes": "Abilities belonging to a character, triggered by dice roll results. Loaded from JSON at runtime. JSON holds the dice_cost (structured trigger condition) and display text; ALL effect behaviour (damage amounts, status infliction, scaling, dice-roll branching, conditionals) is implemented in code, keyed by ability 'id'. The 'description' field is display-only and must NOT be parsed by code. 'character_id' references character.id. Each ability carries an '_impl_note' for the developer implementing its handler.",
+  "_enums": {
+    "type": ["attack", "defense", "passive", "ultimate"]
+  },
+  "_dice_cost_formats": {
+    "symbols": "{ type: 'symbols', symbols: { <symbol>: <count>, ... } } — requires exactly/at-least these symbol counts.",
+    "symbols_min": "{ type: 'symbols_min', symbols: { <symbol>: <min> }, max: <int> } — minimum symbol count that triggers, scaling up to max. Scaling effect is in code.",
+    "pattern": "{ type: 'pattern', pattern: 'small_straight' | 'large_straight' } — a named dice pattern.",
+    "defensive_roll": "{ type: 'defensive_roll', dice_count: <int> } — a defensive ability that rolls N dice and reacts; not a symbol cost."
+  },
+  "_symbol_vocabulary": {
+    "tactician": ["saber", "flag", "medal"],
+    "huntress": ["spear", "claw", "soul", "tooth"]
+  },
+  "abilities": [
+    {
+      "id": "tactician_higher_ground",
+      "character_id": "tactician",
+      "name": "Higher Ground!",
+      "type": "ultimate",
+      "dice_cost": { "type": "symbols", "symbols": { "medal": 5 } },
+      "description": "Inflict Targeted and Constrict onto the opponent. Increase Tactical Advantage stack limit by 1. Then gain max Tactical Advantage and deal 12 ultimate damage.",
+      "_impl_note": "Ultimate. Raises tactical_advantage stack_limit by 1 at runtime (base limit in status_effect.json is 5). Inflicts targeted + constrict, sets TA to current max, deals 12 undefendable."
+    },
+    {
+      "id": "tactician_saber_strike",
+      "character_id": "tactician",
+      "name": "Saber Strike",
+      "type": "attack",
+      "dice_cost": { "type": "symbols_min", "symbols": { "saber": 3 }, "max": 5 },
+      "description": "3 Sabers: deal 4 damage. 4 Sabers: deal 5 damage. 5 Sabers: deal 6 damage.",
+      "_impl_note": "Single ability; damage scales with saber count (3->4, 4->5, 5->6)."
+    },
+    {
+      "id": "tactician_saber_strike_ii",
+      "character_id": "tactician",
+      "name": "Saber Strike II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols_min", "symbols": { "saber": 3 }, "max": 5 },
+      "description": "3 Sabers: deal 5 damage. 4 Sabers: deal 6 damage. 5 Sabers: deal 7 damage. If any 3 dice show an identical number (3-of-a-kind), inflict Constrict.",
+      "_impl_note": "Upgrade of saber_strike. Damage scales (3->5, 4->6, 5->7). Extra: 3-of-a-kind identical values -> inflict constrict."
+    },
+    {
+      "id": "tactician_carpet_bomb",
+      "character_id": "tactician",
+      "name": "Carpet Bomb",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 2, "medal": 2 } },
+      "description": "Gain 1 Tactical Advantage. Deal 2 undefendable, collateral damage to 2 different chosen opponents.",
+      "_impl_note": "Gain 1 TA; 2 undefendable collateral dmg to two distinct targets."
+    },
+    {
+      "id": "tactician_carpet_bomb_ii",
+      "character_id": "tactician",
+      "name": "Carpet Bomb II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 2, "medal": 2 } },
+      "description": "Gain 2 Tactical Advantage. Deal 2 undefendable, collateral damage to 2 different chosen opponents.",
+      "_impl_note": "Upgrade of carpet_bomb. Gain 2 TA (vs 1)."
+    },
+    {
+      "id": "tactician_strategize",
+      "character_id": "tactician",
+      "name": "Strategize",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "flag": 3 } },
+      "description": "Gain 3 Tactical Advantage. Draw 3 cards.",
+      "_impl_note": "Secondary ability of carpet_bomb_ii (relationship handled in code)."
+    },
+    {
+      "id": "tactician_profiteer",
+      "character_id": "tactician",
+      "name": "Profiteer",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "flag": 3, "saber": 1 } },
+      "description": "Gain 1 Tactical Advantage and roll 1 die: on Saber, deal 5 damage; on Flag, gain 4 Tactical Advantage; on Medal, draw 1 card then immediately begin an additional Offensive Roll Phase.",
+      "_impl_note": "Gain 1 TA, then 1-die branch (saber/flag/medal). Medal grants extra offensive roll phase."
+    },
+    {
+      "id": "tactician_profiteer_ii",
+      "character_id": "tactician",
+      "name": "Profiteer II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "flag": 3, "saber": 1 } },
+      "description": "Gain 2 Tactical Advantage and roll 1 die: on Saber, deal 6 damage; on Flag, gain 3 Tactical Advantage; on Medal, draw 1 card then immediately begin an additional Offensive Roll Phase.",
+      "_impl_note": "Upgrade of profiteer. Gain 2 TA; saber branch 6 dmg; flag branch 3 TA."
+    },
+    {
+      "id": "tactician_strategic_approach",
+      "character_id": "tactician",
+      "name": "Strategic Approach",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 3, "medal": 2 } },
+      "description": "Inflict Constrict. Deal 7 damage.",
+      "_impl_note": "Inflict constrict; 7 dmg."
+    },
+    {
+      "id": "tactician_strategic_approach_ii",
+      "character_id": "tactician",
+      "name": "Strategic Approach II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 3, "medal": 2 } },
+      "description": "Gain Tactical Advantage. Inflict Constrict. Deal 7 damage.",
+      "_impl_note": "Upgrade of strategic_approach. Adds TA gain."
+    },
+    {
+      "id": "tactician_indirect_approach",
+      "character_id": "tactician",
+      "name": "Indirect Approach",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 3, "flag": 1 } },
+      "description": "Gain 2 Tactical Advantage. Deal 2 undefendable damage.",
+      "_impl_note": "Secondary ability of strategic_approach_ii (relationship handled in code)."
+    },
+    {
+      "id": "tactician_flank",
+      "character_id": "tactician",
+      "name": "Flank",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "small_straight" },
+      "description": "Gain 1 Tactical Advantage. Deal 6 damage.",
+      "_impl_note": "Gain 1 TA; 6 dmg."
+    },
+    {
+      "id": "tactician_flank_ii",
+      "character_id": "tactician",
+      "name": "Flank II",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "small_straight" },
+      "description": "Gain 2 Tactical Advantage. Deal 6 damage.",
+      "_impl_note": "Upgrade of flank. Gain 2 TA (vs 1)."
+    },
+    {
+      "id": "tactician_maneuver",
+      "character_id": "tactician",
+      "name": "Maneuver",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "medal": 4 } },
+      "description": "Gain 5 Tactical Advantage. Deal 5 undefendable damage.",
+      "_impl_note": "Gain 5 TA; 5 undefendable dmg."
+    },
+    {
+      "id": "tactician_maneuver_ii",
+      "character_id": "tactician",
+      "name": "Maneuver II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "medal": 4 } },
+      "description": "Gain 5 Tactical Advantage. Inflict Constrict. Deal 5 undefendable damage.",
+      "_impl_note": "Upgrade of maneuver. Adds constrict."
+    },
+    {
+      "id": "tactician_reconnaissance",
+      "character_id": "tactician",
+      "name": "Reconnaissance",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "medal": 3 } },
+      "description": "Gain 5 Tactical Advantage.",
+      "_impl_note": "Secondary ability of maneuver_ii (relationship handled in code)."
+    },
+    {
+      "id": "tactician_exploit",
+      "character_id": "tactician",
+      "name": "Exploit",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "large_straight" },
+      "description": "Gain 2 Tactical Advantage. Inflict Constrict. Deal 9 damage.",
+      "_impl_note": "Gain 2 TA; constrict; 9 dmg."
+    },
+    {
+      "id": "tactician_exploit_ii",
+      "character_id": "tactician",
+      "name": "Exploit II",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "large_straight" },
+      "description": "Gain 3 Tactical Advantage. Inflict Constrict. Deal 9 damage.",
+      "_impl_note": "Upgrade of exploit. Gain 3 TA (vs 2)."
+    },
+    {
+      "id": "tactician_interdiction",
+      "character_id": "tactician",
+      "name": "Interdiction",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "saber": 1, "flag": 2, "medal": 1 } },
+      "description": "Draw 2 cards. Inflict Constrict on a chosen opponent.",
+      "_impl_note": "Secondary ability of exploit_ii (relationship handled in code)."
+    },
+    {
+      "id": "tactician_countermeasures",
+      "character_id": "tactician",
+      "name": "Countermeasures",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 4 },
+      "description": "Every 2 Sabers: deal 1 damage to the attacker. Every 1 Flag: prevent 1 damage. Every 1 Medal: gain 1 Tactical Advantage.",
+      "_impl_note": "Defensive roll of 4 dice; tally per-symbol effects."
+    },
+    {
+      "id": "tactician_countermeasures_ii",
+      "character_id": "tactician",
+      "name": "Countermeasures II",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 5 },
+      "description": "Every 2 Sabers: deal 1 undefendable damage to the attacker. Every 1 Flag: prevent 1 damage. Every 1 Medal: gain 1 Tactical Advantage.",
+      "_impl_note": "Upgrade. 5 dice; saber damage is now undefendable."
+    },
+    {
+      "id": "tactician_countermeasures_iii",
+      "character_id": "tactician",
+      "name": "Countermeasures III",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 5 },
+      "description": "Every 2 Sabers: deal 2 undefendable damage to the attacker. Every 1 Flag: prevent 1 damage. Every 1 Medal: gain 1 Tactical Advantage.",
+      "_impl_note": "Upgrade. 5 dice; saber damage 2 undefendable per pair."
+    },
+
+    {
+      "id": "huntress_jungle_fury",
+      "character_id": "huntress",
+      "name": "Jungle Fury",
+      "type": "ultimate",
+      "dice_cost": { "type": "symbols", "symbols": { "tooth": 5 } },
+      "description": "Gain Nyra's Bond, inflict 2 Bleed. Deal 12 undefendable damage.",
+      "_impl_note": "Ultimate. Gain nyras_bond; inflict 2 bleed; 12 undefendable."
+    },
+    {
+      "id": "huntress_animalistic",
+      "character_id": "huntress",
+      "name": "Animalistic",
+      "type": "attack",
+      "dice_cost": { "type": "symbols_min", "symbols": { "spear": 3 }, "max": 5 },
+      "description": "3 Spears: deal 3 damage. 4 Spears: deal 4 damage. 5 Spears: deal 5 damage.",
+      "_impl_note": "Damage scales with spear count (3->3, 4->4, 5->5)."
+    },
+    {
+      "id": "huntress_animalistic_ii",
+      "character_id": "huntress",
+      "name": "Animalistic II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols_min", "symbols": { "spear": 3 }, "max": 5 },
+      "description": "3 Spears: deal 4 damage. 4 Spears: deal 5 damage. 5 Spears: deal 6 damage. On 4-of-a-kind, inflict Bleed.",
+      "_impl_note": "Upgrade. Damage scales (3->4, 4->5, 5->6). Extra: 4-of-a-kind -> inflict bleed."
+    },
+    {
+      "id": "huntress_savage",
+      "character_id": "huntress",
+      "name": "Savage",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "claw": 3, "tooth": 1 } },
+      "description": "Deal 4 damage and roll 1 die: on Spear, add 1 damage; on Claw, add 2 damage; on Soul, gain Nyra's Bond; on Tooth, inflict 1 Bleed.",
+      "_impl_note": "4 base dmg + 1-die branch."
+    },
+    {
+      "id": "huntress_savage_ii",
+      "character_id": "huntress",
+      "name": "Savage II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "claw": 3, "tooth": 1 } },
+      "description": "Deal 5 damage and roll 1 die: on Spear, add 1 damage; on Claw, add 2 damage; on Soul, gain Nyra's Bond; on Tooth, inflict 1 Bleed.",
+      "_impl_note": "Upgrade of savage. 5 base dmg (vs 4)."
+    },
+    {
+      "id": "huntress_hunt",
+      "character_id": "huntress",
+      "name": "Hunt",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "claw": 2, "tooth": 1 } },
+      "description": "Inflict 1 Bleed. Deal 3 damage.",
+      "_impl_note": "Secondary ability of savage_ii (relationship handled in code)."
+    },
+    {
+      "id": "huntress_resuscitate",
+      "character_id": "huntress",
+      "name": "Resuscitate",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "soul": 2 } },
+      "description": "Gain Nyra's Bond. Heal Nyra 3 HP.",
+      "_impl_note": "Gain nyras_bond; heal companion (nyra) 3."
+    },
+    {
+      "id": "huntress_resuscitate_ii",
+      "character_id": "huntress",
+      "name": "Resuscitate II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "soul": 2 } },
+      "description": "Gain Nyra's Bond. Heal Nyra 2 HP for every Soul rolled.",
+      "_impl_note": "Upgrade. Heal scales with souls rolled (2 per soul)."
+    },
+    {
+      "id": "huntress_feral_instincts",
+      "character_id": "huntress",
+      "name": "Feral Instincts",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 3, "soul": 1 } },
+      "description": "Gain Nyra's Bond. Deal 2 undefendable damage.",
+      "_impl_note": "Gain nyras_bond; 2 undefendable."
+    },
+    {
+      "id": "huntress_feral_instincts_ii",
+      "character_id": "huntress",
+      "name": "Feral Instincts II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 3, "soul": 1 } },
+      "description": "Gain Nyra's Bond. Deal 3 undefendable damage.",
+      "_impl_note": "Upgrade. 3 undefendable (vs 2)."
+    },
+    {
+      "id": "huntress_swipe",
+      "character_id": "huntress",
+      "name": "Swipe",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 2, "tooth": 1 } },
+      "description": "Inflict Bleed on up to 3 chosen opponents.",
+      "_impl_note": "Secondary ability of feral_instincts_ii (relationship handled in code)."
+    },
+    {
+      "id": "huntress_onslaught",
+      "character_id": "huntress",
+      "name": "Onslaught",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "small_straight" },
+      "description": "Small straight: inflict 1 Bleed, deal 4 damage. Large straight: inflict 2 Bleed, deal 7 damage.",
+      "_impl_note": "Single ability, one container (like animalistic). Cost gate is a small straight (a large straight always contains one); code checks the roll for a large straight and scales the effect (1 bleed/4 dmg -> 2 bleed/7 dmg)."
+    },
+    {
+      "id": "huntress_onslaught_ii",
+      "character_id": "huntress",
+      "name": "Onslaught II",
+      "type": "attack",
+      "dice_cost": { "type": "pattern", "pattern": "small_straight" },
+      "description": "Small straight: inflict 1 Bleed, deal 5 damage. Large straight: inflict 2 Bleed, deal 8 damage.",
+      "_impl_note": "Upgrade of huntress_onslaught, same single-container pattern; code scales 1 bleed/5 dmg -> 2 bleed/8 dmg on a large straight."
+    },
+    {
+      "id": "huntress_feral",
+      "character_id": "huntress",
+      "name": "Feral",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "tooth": 4 } },
+      "description": "Heal Nyra 1 HP. Deal 5 undefendable damage.",
+      "_impl_note": "Heal nyra 1; 5 undefendable."
+    },
+    {
+      "id": "huntress_feral_ii",
+      "character_id": "huntress",
+      "name": "Feral II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "tooth": 4 } },
+      "description": "Heal Nyra 1 HP. Deal 6 undefendable damage.",
+      "_impl_note": "Upgrade. 6 undefendable (vs 5)."
+    },
+    {
+      "id": "huntress_ferocious",
+      "character_id": "huntress",
+      "name": "Ferocious",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "tooth": 3 } },
+      "description": "Heal Nyra 1 HP. Inflict 2 Bleed on a chosen opponent.",
+      "_impl_note": "Secondary ability of feral_ii (relationship handled in code)."
+    },
+    {
+      "id": "huntress_predatory_advance",
+      "character_id": "huntress",
+      "name": "Predatory Advance",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 2, "claw": 2, "soul": 1 } },
+      "description": "Heal Nyra 1 HP. Deal 5 damage.",
+      "_impl_note": "Heal nyra 1; 5 dmg."
+    },
+    {
+      "id": "huntress_predatory_advance_ii",
+      "character_id": "huntress",
+      "name": "Predatory Advance II",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 2, "claw": 2, "soul": 1 } },
+      "description": "Heal Nyra 1 HP. Deal 6 damage.",
+      "_impl_note": "Upgrade. 6 dmg (vs 5)."
+    },
+    {
+      "id": "huntress_jugular",
+      "character_id": "huntress",
+      "name": "Jugular",
+      "type": "attack",
+      "dice_cost": { "type": "symbols", "symbols": { "spear": 1, "claw": 1, "tooth": 1 } },
+      "description": "Inflict 2 Bleed.",
+      "_impl_note": "Secondary ability of predatory_advance_ii (relationship handled in code)."
+    },
+    {
+      "id": "huntress_maternal_bond",
+      "character_id": "huntress",
+      "name": "Maternal Bond",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 3 },
+      "description": "On Spear: deal 1 damage. For every Soul: heal Nyra 1 HP. If Nyra is active, on Claw: deal 2 damage.",
+      "_impl_note": "Defensive roll of 3 dice; claw branch only if nyra active."
+    },
+    {
+      "id": "huntress_maternal_bond_ii",
+      "character_id": "huntress",
+      "name": "Maternal Bond II",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 4 },
+      "description": "On Spear: deal 1 damage. For every Soul: heal Nyra 1 HP. If Nyra is active, on Claw: deal 2 damage.",
+      "_impl_note": "Upgrade. 4 dice."
+    },
+    {
+      "id": "huntress_maternal_bond_iii",
+      "character_id": "huntress",
+      "name": "Maternal Bond III",
+      "type": "defense",
+      "dice_cost": { "type": "defensive_roll", "dice_count": 4 },
+      "description": "For every Spear or Tooth: deal 1 damage. For every Soul: heal Nyra 1 HP. If Nyra is active, on Claw: deal 2 damage.",
+      "_impl_note": "Upgrade. 4 dice; spear OR tooth now deals damage."
+    }
+  ]
+}

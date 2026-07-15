@@ -1,0 +1,90 @@
+[gd_scene format=3 uid="uid://pofdkqvdq2ch"]
+
+[ext_resource type="PackedScene" uid="uid://dicescene01" path="res://scenes/match/components/dice/dice.tscn" id="1_4xye3"]
+[ext_resource type="Script" uid="uid://dmnjbkeenwoga" path="res://scenes/match/dice_rolling.gd" id="1_repv8"]
+
+[node name="DiceRolling" type="Control" unique_id=79965334]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_repv8")
+
+[node name="Dice1" parent="." unique_id=878749591 instance=ExtResource("1_4xye3")]
+position = Vector2(179, 439.00003)
+scale = Vector2(5.625, 5.21875)
+
+[node name="Dice2" parent="." unique_id=1528643432 instance=ExtResource("1_4xye3")]
+position = Vector2(387.00003, 445.00003)
+scale = Vector2(5.625, 5.21875)
+
+[node name="Dice3" parent="." unique_id=2018215954 instance=ExtResource("1_4xye3")]
+position = Vector2(600.00006, 446)
+scale = Vector2(5.625, 5.21875)
+
+[node name="Dice4" parent="." unique_id=1209961346 instance=ExtResource("1_4xye3")]
+position = Vector2(819, 450.00003)
+scale = Vector2(5.625, 5.21875)
+
+[node name="Dice5" parent="." unique_id=2121309079 instance=ExtResource("1_4xye3")]
+position = Vector2(1011.0001, 454)
+scale = Vector2(5.625, 5.21875)
+
+[node name="RollResult" type="HBoxContainer" parent="." unique_id=1637014582]
+visible = false
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = -194.0
+offset_right = 303.0
+offset_bottom = -138.0
+grow_vertical = 0
+mouse_filter = 2
+alignment = 1
+
+[node name="ClickCatcher" type="Control" parent="." unique_id=1443902781]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Roll" type="Button" parent="." unique_id=1698124624]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -100.0
+offset_right = 80.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Roll"
+
+[node name="Keep" type="Button" parent="." unique_id=1355742096]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = 96.0
+offset_top = -100.0
+offset_right = 256.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Keep"
+
+[connection signal="gui_input" from="ClickCatcher" to="." method="_on_catcher_gui_input"]
+[connection signal="pressed" from="Roll" to="." method="_on_roll_pressed"]
+[connection signal="pressed" from="Keep" to="." method="_on_keep_pressed"]
