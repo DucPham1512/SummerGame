@@ -25,7 +25,7 @@ steps:
 
   - script: |
       mkdir -p ~/.local/share/godot/export_templates/4.6.3.stable
-      curl -L -o /tmp/templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
+      wget -q -O /tmp/templates.tpz https://github.com/godotengine/godot-builds/releases/download/4.6.3-stable/Godot_v4.6.3-stable_export_templates.tpz
       cd /tmp
       unzip -q templates.tpz
       cp -r templates/* ~/.local/share/godot/export_templates/4.6.3.stable/
