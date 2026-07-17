@@ -6,6 +6,15 @@ extends Control
 ## match's very first.
 const INCOME_CP := 1
 
+## How long the match freezes between someone hitting 0 and the verdict. We
+## apply our own damage synchronously but hear the opponent's HP over the
+## network, so a double-KO (rules 1.6 resolves the attack and the counter
+## together) lands as two separate zeroes in opposite orders on the two
+## clients. Judging the first one would call it a Defeat on BOTH screens and
+## never a Draw; this beat lets the other side's HP land so both clients read
+## the same final pair and agree.
+const RESULT_SETTLE := 0.3
+
 @onready var player : Combatant = $Player
 @onready var opponent : Combatant = $Opponent
 @onready var turn_manager : TurnManager = $TurnManager
@@ -30,6 +39,10 @@ var _pending_attack : SkillEffect = null
 ## waiting for the defender to resolve it — they own the DEFENSIVE window and
 ## drive it to MAIN_TWO. Solo never sets this (it uses _pending_attack).
 var _awaiting_defense : bool = false
+## Latched the moment the match is decided: stops the second combatant's zero
+## (or a peer leaving on the way out) from re-deciding an outcome we already
+## have, and freezes the phase flow while the verdict settles.
+var _match_over : bool = false
 
 
 func _ready() -> void:
@@ -40,6 +53,13 @@ func _ready() -> void:
 	# multiplayer, the mirror's board in the solo demo.
 	opponent_skill_layout.skill_chosen.connect(_on_skill_chosen)
 	deck_and_hand.card_sold.connect(_on_card_sold)
+	# Death watch. Every way HP can reach 0 — Player.update_player_health,
+	# Opponent.on_opponent_health, Combatant.change_health (cards, Nyra's Bond)
+	# — ends in health_changed on one of these two, so this is a complete cut.
+	# (Nyra is deliberately not watched: she isn't a Combatant, and 0 HP downs
+	# her rather than losing the match.)
+	player.health_changed.connect(_on_combatant_health_changed)
+	opponent.health_changed.connect(_on_combatant_health_changed)
 	# Neither board shows until the first turn declares whose it is.
 	player_skill_layout.hide()
 	opponent_skill_layout.hide()
@@ -291,8 +311,9 @@ func _run_offensive_roll() -> void:
 	# run() shows the roller and packs the table away when the session ends;
 	# the root stays visible carrying the result strip.
 	offensive_roll = await dice_roller.run(Util.max_dice_rolls)
-	# The phase may have been ended while the dice were still out.
-	if turn_manager.phase != TurnManager.Phase.OFFENSIVE:
+	# The phase may have been ended — or the match decided — while the dice
+	# were still out. stop() doesn't cancel this coroutine, so check both.
+	if _match_over or turn_manager.phase != TurnManager.Phase.OFFENSIVE:
 		return
 	# THE phase roll goes on display. Utility rolls (card/modifier effects)
 	# just run() without calling display_result, so they never overwrite it.
@@ -335,7 +356,8 @@ func _run_defensive_roll() -> void:
 	var dice_count := int(defensive_skill.dice_cost.get("dice_count", 1))
 	print("[match] defensive roll: %s throws %d dice" % [defensive_skill.skill_id, dice_count])
 	defensive_roll = await dice_roller.run(1, dice_count)   # single roll, no rerolls
-	if turn_manager.phase != TurnManager.Phase.DEFENSIVE:
+	# Same as the offensive roll: the match may have been decided mid-throw.
+	if _match_over or turn_manager.phase != TurnManager.Phase.DEFENSIVE:
 		return
 	dice_roller.display_result(defensive_roll, defender_board.character)
 	dice_roller.set_result_visible(true)
@@ -585,7 +607,67 @@ func _on_card_sold(_slot : int, _card_id : String) -> void:
 	next_phase_button.disabled = not _next_phase_available()
 
 
-func _on_end_match_button_down() -> void:
+# --- ending the match ------------------------------------------------------------
+
+# A combatant's HP moved. The match is over the moment either side is down —
+# whatever the phase (deliberately not Dice Throne's timing, but the rule we
+# want here).
+func _on_combatant_health_changed(_health : int) -> void:
+	if _match_over or (player.health > 0 and opponent.health > 0):
+		return
+	_finish_match()
+
+
+# Someone is down: freeze at once, then settle before judging (see
+# RESULT_SETTLE — the double-KO's two zeroes don't arrive together).
+func _finish_match() -> void:
+	_match_over = true
 	turn_manager.stop()
+	await get_tree().create_timer(RESULT_SETTLE).timeout
+	var outcome := _decide_outcome()
+	print("[match] over — player %d hp, opponent %d hp -> %s" % [
+			player.health, opponent.health, EventBus.Outcome.keys()[outcome]])
+	_leave_to_result(outcome)
+
+
+## The verdict from the final HP pair, local player's point of view. Kept pure
+## so it can be checked without driving a whole match.
+func _decide_outcome() -> EventBus.Outcome:
+	if player.health <= 0 and opponent.health <= 0:
+		return EventBus.Outcome.DRAW
+	if player.health <= 0:
+		return EventBus.Outcome.DEFEAT
+	return EventBus.Outcome.VICTORY
+
+
+## The other client vanished — conceded, crashed, or closed the game. Either
+## way there's no match left, so we take the win. The _match_over latch keeps
+## the normal end-of-match exodus (both sides leaving) from overwriting a
+## verdict we already reached.
+func opponent_forfeited() -> void:
+	if _match_over:
+		return
+	_match_over = true
+	turn_manager.stop()
+	print("[match] opponent left the match — awarding the win")
+	_leave_to_result(EventBus.Outcome.VICTORY)
+
+
+# Hand the verdict to the result screen and get out. The screen reads
+# match_outcome once and clears it.
+func _leave_to_result(outcome : EventBus.Outcome) -> void:
+	EventBus.match_outcome = outcome
 	GDSync.lobby_leave()
 	get_tree().change_scene_to_packed(MatchResult)
+
+
+# End Match is a concede: we take the loss, and simply leaving the lobby is
+# what tells the other client they won (their client_left fires). No separate
+# message to lose the race against lobby_leave().
+func _on_end_match_button_down() -> void:
+	if _match_over:
+		return
+	_match_over = true
+	turn_manager.stop()
+	print("[match] conceded")
+	_leave_to_result(EventBus.Outcome.DEFEAT)
