@@ -77,6 +77,11 @@ func _ready() -> void:
 
 	deck_and_hand.turn_manager = turn_manager   # phase-gate card drops
 
+	# A peer vanishing (conceded, crashed, closed the game) is the match
+	# ending: the match takes the win rather than sitting in a game that can
+	# never finish. Nothing else in the match watches for a disconnect.
+	GDSync.client_left.connect(_on_client_left)
+
 	var solo := GDSync.lobby_get_player_count() < 2
 	_assign_characters(solo)
 
@@ -114,6 +119,12 @@ func _assign_characters(solo : bool) -> void:
 		local_char = GUEST_CHARACTER
 	var remote_char := GUEST_CHARACTER if local_char == HOST_CHARACTER else HOST_CHARACTER
 	owner.assign_characters(local_char, remote_char)
+
+
+func _on_client_left(client_id : int) -> void:
+	if client_id == GDSync.get_client_id():
+		return   # our own leave on the way out of a finished match
+	owner.opponent_forfeited()
 
 
 # --- match start ----------------------------------------------------------------

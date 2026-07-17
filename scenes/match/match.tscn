@@ -27,14 +27,6 @@ offset_bottom = 181.0
 theme_override_font_sizes/font_size = 50
 text = "Match"
 
-[node name="EndMatch" type="Button" parent="." unique_id=1061581449]
-layout_mode = 0
-offset_left = 40.0
-offset_top = 424.0
-offset_right = 176.0
-offset_bottom = 480.0
-text = "End Match"
-
 [node name="Player" parent="." unique_id=1110229630 instance=ExtResource("3_h1ndw")]
 layout_mode = 1
 anchor_left = -0.004340278
@@ -42,6 +34,14 @@ grow_horizontal = 2
 
 [node name="Opponent" parent="." unique_id=1093824657 instance=ExtResource("4_nudob")]
 layout_mode = 1
+
+[node name="EndMatch" type="Button" parent="." unique_id=1061581449]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 424.0
+offset_right = 176.0
+offset_bottom = 480.0
+text = "End Match"
 
 [node name="TurnManager" type="Node" parent="." unique_id=1467208395]
 script = ExtResource("5_tmgr1")
