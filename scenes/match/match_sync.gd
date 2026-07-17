@@ -55,6 +55,7 @@ func _ready() -> void:
 	GDSync.expose_func(opponent.on_opponent_cp)
 	GDSync.expose_func(opponent.on_opponent_companion)
 	GDSync.expose_func(opponent.on_opponent_statuses)
+	GDSync.expose_func(opponent.set_deck_count)
 	GDSync.expose_func(turn_manager.end_phase)
 	GDSync.expose_func(_remote_match_start)
 	GDSync.expose_func(_remote_incoming_attack)
@@ -67,6 +68,7 @@ func _ready() -> void:
 	deck_and_hand.card_played.connect(_broadcast_card_played)
 	deck_and_hand.card_sold.connect(_broadcast_card_sold)
 	deck_and_hand.cards_drawn.connect(_broadcast_cards_drawn)
+	deck_and_hand.pile_refilled.connect(_broadcast_pile_refilled)
 	# Status tokens are public info: any change to ours republishes the whole
 	# set to their mirror of us.
 	player.status_applied.connect(_broadcast_statuses)
@@ -183,6 +185,14 @@ func _broadcast_card_sold(slot : int, _card_id : String) -> void:
 
 func _broadcast_cards_drawn(count : int) -> void:
 	GDSync.call_func(opponent.on_opponent_drew, count)
+
+
+# Our deck refilled from our discard pile (rules 1.2). on_opponent_drew only
+# ever counts the mirror's pile DOWN, so without this it would sit at 0 for the
+# rest of the match; the refilled size is absolute, like every other public
+# value we replicate.
+func _broadcast_pile_refilled(pile_size : int) -> void:
+	GDSync.call_func(opponent.set_deck_count, pile_size)
 
 
 # One signature for both companion signals (health_changed's int and

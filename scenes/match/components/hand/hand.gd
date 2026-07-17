@@ -69,6 +69,10 @@ func _layout() -> void:
 	# droop scales by the same ratio so sparse hands sit flat, not saggy.
 	var outer_angle := minf(angle_per_card * float(n - 1) * 0.5, max_fan_angle)
 	var fan_scale := 0.0 if max_fan_angle <= 0.0 else outer_angle / max_fan_angle
+	# The fan never grows wider than the hand itself: past that the cards just
+	# overlap more tightly instead of marching off-screen where the mouse can't
+	# reach them (bug 64 — a 33-card hand spanned ±2080px and was unsellable).
+	var span := minf(card_spacing * float(n - 1), maxf(size.x - card_size.x, 0.0))
 	for i in n:
 		var card := _cards[i]
 		# -0.5 (leftmost) .. 0.5 (rightmost); the centre card is 0.
@@ -82,7 +86,7 @@ func _layout() -> void:
 		# hand, top-centre for the mirrored opponent fan.
 		card.pivot_offset = Vector2(card_size.x * 0.5, 0.0 if top_aligned else card_size.y)
 
-		var x := size.x * 0.5 + spread * card_spacing * float(n - 1) - card_size.x * 0.5
+		var x := size.x * 0.5 + spread * span - card_size.x * 0.5
 		var y : float
 		if top_aligned:
 			# Mirrored fan: hangs level with the margin at the edges, centre

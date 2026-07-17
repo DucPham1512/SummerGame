@@ -18,6 +18,10 @@ const FLY_TIME := 0.35
 signal card_played(slot : int, card_id : String)
 signal card_sold(slot : int, card_id : String)
 signal cards_drawn(count : int)
+## The deck ran dry and refilled from the discard pile (rules 1.2). Deck size
+## is public info, so the mirror's counter — which only ever counts draws down —
+## needs the new absolute pile size.
+signal pile_refilled(pile_size : int)
 
 ## The player whose resources this hand belongs to (set by player.tscn); left
 ## null in the standalone harness, where board verbs fall back to warnings.
@@ -69,6 +73,11 @@ func draw_cards(amount : int) -> void:
 		if card == null:
 			# Rules 1.2: an empty deck refills from the shuffled discard pile.
 			if discard_pile.is_empty():
+				# Nothing anywhere left to draw: skip the draw and play on. The
+				# Discard Phase's hand limit keeps the whole deck from sitting
+				# in one hand, so this should stay unreachable — say so rather
+				# than failing silently if it ever isn't.
+				push_warning("DeckAndHand: deck AND discard empty — draw skipped")
 				pile_count.text = "empty"
 				break
 			_reshuffle_discard_into_deck()
@@ -106,11 +115,17 @@ func initialize_deck(deck_code : String) -> void:
 	_update_pile_count()
 
 
+# Rules 1.2: a depleted deck continues from the shuffled discard pile. Only the
+# PILE is refilled — rebuilding the deck from the discard code (as this used to)
+# would replace the decklist itself with whatever happened to be discarded, on
+# top of freeing the cards still in the player's hand (bug 64).
 func _reshuffle_discard_into_deck() -> void:
-	deck.construct_from_hash(",".join(discard_pile))
+	deck.refill_pile_from(discard_pile)
+	print("[cards] deck depleted — reshuffled %d discarded card(s) into the pile"
+			% discard_pile.size())
 	discard_pile.clear()
-	deck.shuffle()
 	_update_pile_count()
+	pile_refilled.emit(deck.draw_pile.size())
 
 
 # Runs synchronously (up to the await) inside the card's drag_ended emit, so
@@ -193,7 +208,7 @@ func _animate_draw(card : Card) -> void:
 
 
 func _update_pile_count() -> void:
-	pile_count.text = str(deck.shuffled_deck.size())
+	pile_count.text = str(deck.draw_pile.size())
 
 
 func _on_remove() -> void:
