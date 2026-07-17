@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://0muk2avfi66d"]
+
+[ext_resource type="Script" uid="uid://cstatusrow0001" path="res://scenes/match/components/status_effects/status_row.gd" id="1_srow"]
+
+[node name="StatusRow" type="HBoxContainer" unique_id=1409283746]
+offset_right = 704.0
+offset_bottom = 44.0
+script = ExtResource("1_srow")

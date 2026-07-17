@@ -115,6 +115,25 @@ func on_opponent_cp(new_cp : int) -> void:
 	cp_changed.emit(cp)
 
 
+## The opponent's status tokens, as absolute replicated state: the complete
+## set, not a delta. These are display-only over here (the owning client runs
+## the real behaviour), so the set is rebuilt wholesale rather than merged —
+## and the stack LIMITS travel too, since abilities raise them at runtime
+## (Higher Ground's +1 TA limit) and apply_status would otherwise clamp a
+## 6-stack Tactical Advantage back down to the data's base 5.
+func on_opponent_statuses(ids : Array, stacks : Array, limits : Array) -> void:
+	for status_id in status_effects.keys():
+		var stale : StatusEffect = status_effects[status_id]
+		status_effects.erase(status_id)
+		status_removed.emit(stale)
+	for i in ids.size():
+		var token := StatusEffect.create(ids[i], 0)
+		token.stack_limit = int(limits[i])
+		token.add_stacks(int(stacks[i]))
+		status_effects[ids[i]] = token
+		status_applied.emit(token)
+
+
 ## The opponent's companion (Nyra) changed: absolute replicated hp + state.
 ## No-op when this opponent's character has no companion — the receiver must
 ## exist on both clients for the mirrored-path call to resolve.

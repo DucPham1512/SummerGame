@@ -165,6 +165,15 @@ func _add_companion_bar(side : Combatant, companion : Companion) -> void:
 	refresh.call()
 
 
+# Exactly one skill board may ever be on screen: the two occupy the same
+# centre-of-board space, and their roots are MOUSE_FILTER_STOP — so whichever
+# is shown, the other MUST be hidden or it covers it and eats its clicks
+# (bug 65: the attacker's board swallowed the defender's ability press).
+func _show_only_board(board : SkillLayout) -> void:
+	player_skill_layout.visible = board == player_skill_layout
+	opponent_skill_layout.visible = board == opponent_skill_layout
+
+
 # Only the active side's skill board is on screen: they occupy the same
 # centre-of-board space, so they swap with the turn.
 func _on_turn_started(active : Combatant) -> void:
@@ -315,11 +324,15 @@ func _tally_symbols(values : Array[int], character : String) -> Dictionary:
 func _run_defensive_roll() -> void:
 	var defender_board : SkillLayout = opponent_skill_layout if turn_manager.active == player \
 			else player_skill_layout
-	defender_board.show()
+	# The defender's board must come up ALONE: the two boards share the centre
+	# of the screen, so leaving the attacker's up would cover this one and
+	# swallow the click that activates the ability (bug 65).
+	_show_only_board(defender_board)
 	var defensive_skill : Skill = defender_board.defensive_skill()
 	if defensive_skill == null:
 		return   # no defensive ability on this board (bare base layout)
 	var dice_count := int(defensive_skill.dice_cost.get("dice_count", 1))
+	print("[match] defensive roll: %s throws %d dice" % [defensive_skill.skill_id, dice_count])
 	defensive_roll = await dice_roller.run(1, dice_count)   # single roll, no rerolls
 	if turn_manager.phase != TurnManager.Phase.DEFENSIVE:
 		return
@@ -456,16 +469,20 @@ func _on_skill_chosen(skill : Skill) -> void:
 	# Limit changes and max-outs must work from an empty board too (Higher
 	# Ground grants max TA whether or not the player already holds any):
 	# create the token at 0 stacks when it's missing.
+	# These go straight at the token, bypassing apply_status — so each one has
+	# to announce itself or the token row and the netcode never hear about it.
 	for status_id in skill_effect.stack_limit_delta:
 		var token : StatusEffect = player.get_status(status_id)
 		if token == null:
 			token = player.apply_status(status_id, 0)
 		token.stack_limit += int(skill_effect.stack_limit_delta[status_id])
+		player.notify_status_changed(token)
 	for status_id in skill_effect.max_out_self:
 		var token : StatusEffect = player.get_status(status_id)
 		if token == null:
 			token = player.apply_status(status_id, 0)
 		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
+		player.notify_status_changed(token)
 	# The target-requiring remainder is the Attack: it waits for the
 	# defensive phase (1.6). Solo keeps it locally; multiplayer announces it
 	# to the defender, who owns the DEFENSIVE window and resolves it against

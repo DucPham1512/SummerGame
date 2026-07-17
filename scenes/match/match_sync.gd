@@ -54,6 +54,7 @@ func _ready() -> void:
 	GDSync.expose_func(opponent.on_opponent_health)
 	GDSync.expose_func(opponent.on_opponent_cp)
 	GDSync.expose_func(opponent.on_opponent_companion)
+	GDSync.expose_func(opponent.on_opponent_statuses)
 	GDSync.expose_func(turn_manager.end_phase)
 	GDSync.expose_func(_remote_match_start)
 	GDSync.expose_func(_remote_incoming_attack)
@@ -66,6 +67,11 @@ func _ready() -> void:
 	deck_and_hand.card_played.connect(_broadcast_card_played)
 	deck_and_hand.card_sold.connect(_broadcast_card_sold)
 	deck_and_hand.cards_drawn.connect(_broadcast_cards_drawn)
+	# Status tokens are public info: any change to ours republishes the whole
+	# set to their mirror of us.
+	player.status_applied.connect(_broadcast_statuses)
+	player.status_changed.connect(_broadcast_statuses)
+	player.status_removed.connect(_broadcast_statuses)
 
 	deck_and_hand.turn_manager = turn_manager   # phase-gate card drops
 
@@ -184,6 +190,20 @@ func _broadcast_cards_drawn(count : int) -> void:
 func _broadcast_companion(_arg = null) -> void:
 	GDSync.call_func(opponent.on_opponent_companion,
 			player.companion.hp, player.companion.state)
+
+
+# One signature for all three status signals (each carries a StatusEffect):
+# whatever changed, the whole token set goes out as absolute state, limits
+# included — a raised limit (Higher Ground) is part of the picture.
+func _broadcast_statuses(_token = null) -> void:
+	var ids : Array = []
+	var stacks : Array = []
+	var limits : Array = []
+	for token in player.status_effects.values():
+		ids.append(token.status_id)
+		stacks.append(token.stacks)
+		limits.append(token.stack_limit)
+	GDSync.call_func(opponent.on_opponent_statuses, ids, stacks, limits)
 
 
 # --- combat announce (attacker <-> defender) ------------------------------------
