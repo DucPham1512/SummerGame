@@ -59,6 +59,14 @@ func apply_status(status_id : String, stack_count : int = 1) -> StatusEffect:
 	return token
 
 
+## Re-announces a token the caller mutated DIRECTLY — runtime stack-limit
+## changes and max-outs (Higher Ground) go straight at the token and so bypass
+## apply_status's signals. Callers doing that must announce it, or the UI and
+## the netcode never hear about it.
+func notify_status_changed(token : StatusEffect) -> void:
+	status_changed.emit(token)
+
+
 func has_status(status_id : String) -> bool:
 	return status_effects.has(status_id)
 

@@ -329,11 +329,15 @@ func _finish_session() -> void:
 	re_roll_mask = 0
 	for index in dice:
 		update_die_visual(index)
-	# Capped sessions clean their own table away (dice, buttons, the modal
-	# catcher), leaving the root — and the result strip — showable on its own.
+	# Capped sessions put the interactive furniture away — the modal catcher
+	# especially, so the board underneath becomes clickable again — but the
+	# DICE STAY, showing what they landed on. A 1-roll session (the defensive
+	# roll) has no SELECTING pause, so hiding them here blinked the result away
+	# the instant it settled and the throw read as "no animation" (bug 65).
+	# The whole roller is hidden by the match on the next non-roll phase.
 	# The uncapped harness keeps its table.
 	if _session_max_rolls > 0:
-		_set_table_visible(false)
+		_set_controls_visible(false)
 	# Only the participating dice report a result. Built as a typed array —
 	# slice() returns a plain Array, which can't cross a typed await boundary.
 	var results : Array[int] = []
@@ -342,14 +346,22 @@ func _finish_session() -> void:
 	rolling_finished.emit(results)
 
 
-# The "table" = the interactive roll furniture. Hidden between sessions so the
-# scene can stay visible purely as a result display without blocking input.
+# The "table" = the interactive roll furniture PLUS the dice. Used to set the
+# table for a session; teardown goes through _set_controls_visible so the dice
+# can outlive it (see _finish_session).
 func _set_table_visible(on : bool) -> void:
+	_set_controls_visible(on)
+	for index in dice:
+		dice[index].visible = on and index < active_count
+
+
+# Just the interactive furniture: the modal catcher (which blocks everything
+# underneath while it's up) and the roll buttons. Hidden at session end so the
+# scene can stay visible purely as a result display without blocking input.
+func _set_controls_visible(on : bool) -> void:
 	_click_catcher.visible = on
 	_roll_button.visible = on
 	_keep_button.visible = on
-	for index in dice:
-		dice[index].visible = on and index < active_count
 
 
 # --- roll result display -----------------------------------------------------
