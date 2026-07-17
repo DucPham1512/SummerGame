@@ -185,8 +185,9 @@ func _on_turn_started(active : Combatant) -> void:
 
 func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
 	phase_label.text = "%s — %s" % [active.name, TurnManager.Phase.keys()[phase].capitalize()]
-	# Visual cue: the button is live only in windows this side controls.
-	next_phase_button.disabled = not _my_phase_window() and not _is_solo()
+	# Visual cue: the button is live only in windows this side controls — and
+	# not while the Discard Phase still owes cards (rules 1.8).
+	next_phase_button.disabled = not _next_phase_available()
 	# Roll-window furniture (dice, result strip, skill selections, the
 	# defender board swap) belongs to the OFFENSIVE -> DEFENSIVE stretch;
 	# any other phase clears it and restores the active side's board.
@@ -524,12 +525,25 @@ func _on_skill_chosen(skill : Skill) -> void:
 
 
 func _on_next_phase_pressed() -> void:
-	# Each side advances only the windows it controls (see _my_phase_window);
-	# the guard is skipped without a second client so the button can drive
-	# both sides in local testing.
-	if not _my_phase_window() and not _is_solo():
+	if not _next_phase_available():
 		return
 	_end_phase_networked()
+
+
+# Whether this side may advance the phase right now. Each side advances only
+# the windows it controls (see _my_phase_window); the guard is skipped without
+# a second client so the button can drive both sides in local testing.
+#
+# DISCARD is the one window the button may NOT skip: rules 1.8 says the active
+# player sells down to the hand limit, and _try_finish_discard ends the phase
+# for them the moment they comply. Skipping it let a player hoard their entire
+# deck, so nothing ever reached the discard pile to reshuffle from (bug 64).
+func _next_phase_available() -> bool:
+	if not _my_phase_window() and not _is_solo():
+		return false
+	if turn_manager.phase == TurnManager.Phase.DISCARD and turn_manager.active == player:
+		return deck_and_hand.hand.get_hand_size() <= Util.one_v_one_hand_limit
+	return true
 
 
 # The phase windows this client owns: the active player's own turn — except
@@ -567,6 +581,8 @@ func _try_finish_discard() -> void:
 
 func _on_card_sold(_slot : int, _card_id : String) -> void:
 	_try_finish_discard()
+	# Selling down to the limit is what re-opens the button (1.8).
+	next_phase_button.disabled = not _next_phase_available()
 
 
 func _on_end_match_button_down() -> void:
