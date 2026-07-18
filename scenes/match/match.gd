@@ -141,7 +141,7 @@ func _swap_layout(side : Combatant, current : SkillLayout, char_id : String) -> 
 # The huntress side gets Nyra (ACTIVE at 5/7) and her HP bar; other
 # characters have no companion and this is a no-op.
 func _setup_companion(side : Combatant, char_id : String) -> void:
-	var companion := Companion.create_for_character(char_id)
+	var companion := CompanionNyra.create_for_character(char_id)
 	if companion == null:
 		return
 	side.add_child(companion)
@@ -152,7 +152,7 @@ func _setup_companion(side : Combatant, char_id : String) -> void:
 # Nyra's HP bar: the players' health bar scene reused at companion scale,
 # sitting to the right of the side's resource bars (Player = bottom band,
 # Opponent = top band), with a name/HP/state label.
-func _add_companion_bar(side : Combatant, companion : Companion) -> void:
+func _add_companion_bar(side : Combatant, companion : CompanionNyra) -> void:
 	var wrapper := Control.new()
 	wrapper.name = "CompanionBar"
 	wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -506,6 +506,11 @@ func _on_skill_chosen(skill : Skill) -> void:
 			token = player.apply_status(status_id, 0)
 		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
 		player.notify_status_changed(token)
+	# Character-specific offensive modifiers (bug 61): the active player's board
+	# transforms the outgoing skill effect (the huntress's Nyra adds +2 damage
+	# while active; the tactician no-ops). Offense-only — this handler bails to
+	# defense above. match.gd stays character-agnostic here.
+	player_skill_layout.apply_offense_modifiers(skill_effect, player)
 	# The target-requiring remainder is the Attack: it waits for the
 	# defensive phase (1.6). Solo keeps it locally; multiplayer announces it
 	# to the defender, who owns the DEFENSIVE window and resolves it against

@@ -17,7 +17,7 @@ func can_spend() -> bool:
 
 
 func spend_options(ctx : BoardContext) -> Array[Dictionary]:
-	var nyra : Companion = ctx.caster.companion if ctx.caster != null else null
+	var nyra : CompanionNyra = ctx.caster.companion if ctx.caster != null else null
 	var nyra_active := nyra != null and nyra.is_active()
 	return [
 		{
@@ -38,12 +38,12 @@ func spend_options(ctx : BoardContext) -> Array[Dictionary]:
 
 # on_confirm is called (own_share, other_share); ctx and nyra ride in as
 # bound arguments after those.
-func _spend_split(own_share : int, nyra_share : int, ctx : BoardContext, nyra : Companion) -> void:
+func _spend_split(own_share : int, nyra_share : int, ctx : BoardContext, nyra : CompanionNyra) -> void:
 	remove_stacks(1)
 	ctx.caster.change_health(-own_share)
 	nyra.take_damage(nyra_share)
 
 
-func _spend_heal(nyra : Companion) -> void:
+func _spend_heal(nyra : CompanionNyra) -> void:
 	remove_stacks(1)
 	nyra.heal(nyra.recovery)

@@ -63,6 +63,16 @@ func _kit() -> Dictionary:
 	return {}
 
 
+## Hook: the active player's board transforms the outgoing offensive
+## SkillEffect in place, before it becomes the announced attack (1.4).
+## Per-character subclasses override to add their bespoke offensive rules (the
+## huntress's companion damage bonus, etc.); the base no-ops, so match
+## resolution stays character-agnostic and characters without such a rule need
+## no override.
+func apply_offense_modifiers(_effect : SkillEffect, _caster : Combatant) -> void:
+	pass
+
+
 func _populate() -> void:
 	var kit := _kit()
 	if kit.is_empty():

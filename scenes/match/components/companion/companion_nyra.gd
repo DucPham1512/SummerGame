@@ -1,9 +1,12 @@
-class_name Companion
+class_name CompanionNyra
 extends Node
 
-# A character's companion (companions.json) — deliberately tiny: health, plus
-# a damage amplification the combat resolver consults when the owner attacks
-# while the companion is active (TODO: resolver hookup).
+# Nyra — the huntress's companion (companions.json). Deliberately tiny: health,
+# plus an offensive amplification she applies to her owner's outgoing skill
+# effect while active (amplify_offense). Companions are concrete objects with
+# no shared base class — that's why this is named for Nyra rather than a
+# generic "Companion" — so each future companion is its own file/class; the
+# match just hands each attack to whatever companion the side has.
 #
 # Two states: ACTIVE and DOWNED. She enters the match ACTIVE at start_hp.
 # Depleting her HP downs her, and being downed is stickier than being hurt —
@@ -28,15 +31,15 @@ var state : State = State.ACTIVE
 
 ## Factory: the companion belonging to a character (e.g. "huntress" -> Nyra),
 ## fully initialised from the repository. Null when the character has none.
-static func create_for_character(char_id : String) -> Companion:
+static func create_for_character(char_id : String) -> CompanionNyra:
 	for entry in GameDataLoader.companion_repository.values():
 		if entry.get("character_id", "") == char_id:
 			return _from_entry(entry)
 	return null
 
 
-static func _from_entry(entry : Dictionary) -> Companion:
-	var companion := Companion.new()
+static func _from_entry(entry : Dictionary) -> CompanionNyra:
+	var companion := CompanionNyra.new()
 	companion.companion_id = entry.get("id", "")
 	companion.companion_name = entry.get("name", "")
 	companion.name = companion.companion_name
@@ -51,6 +54,18 @@ static func _from_entry(entry : Dictionary) -> Companion:
 
 func is_active() -> bool:
 	return state == State.ACTIVE
+
+
+## Applies this companion's offensive amplification to its owner's outgoing
+## skill effect, returning the bonus added (0 when downed, or the skill deals
+## no damage — the bonus rides existing damage "to deal damage to the other
+## player", it doesn't turn a utility skill into an attack). The rule lives
+## here because companions vary; the match just hands over the effect.
+func amplify_offense(effect : SkillEffect) -> int:
+	if not is_active() or damage_amp <= 0 or effect.damage <= 0:
+		return 0
+	effect.damage += damage_amp
+	return damage_amp
 
 
 func take_damage(amount : int) -> void:

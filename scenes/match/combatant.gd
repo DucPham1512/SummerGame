@@ -28,7 +28,7 @@ var max_cp : int = Util.one_v_one_max_cp
 
 ## The character's companion (Nyra for the huntress); null when none. Assigned
 ## by whatever builds the side (char selection later; tests directly).
-var companion : Companion = null
+var companion : CompanionNyra = null
 
 # One token (stack pile) per status id — stacking merges, per StatusEffect's
 # "each instance is one player's token stack".

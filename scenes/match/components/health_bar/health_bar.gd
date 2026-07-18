@@ -17,7 +17,7 @@ func update(player_health):
 
 ## Points the bar at a companion instead of a combatant (Nyra's HP bar): same
 ## visuals, the companion's max HP (7) as the scale.
-func track_companion(companion : Companion) -> void:
+func track_companion(companion : CompanionNyra) -> void:
 	max_health = companion.max_hp
 	companion.health_changed.connect(update)
 	update(companion.hp)

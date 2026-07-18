@@ -10,7 +10,7 @@ extends Control
 
 var owner_side : Combatant
 var other_side : Combatant
-var nyra : Companion
+var nyra : CompanionNyra
 
 var value_spins : Array[SpinBox] = []
 var upgrade_buttons : Array[Button] = []
@@ -35,12 +35,12 @@ func _ready() -> void:
 	other_side.health = other_side.max_hp
 	add_child(other_side)
 
-	nyra = Companion.create_for_character("huntress")
+	nyra = CompanionNyra.create_for_character("huntress")
 	if nyra != null:
 		add_child(nyra)
 		owner_side.companion = nyra
 		nyra.health_changed.connect(func(_hp : int) -> void: _refresh_panels())
-		nyra.state_changed.connect(func(_state : Companion.State) -> void: _refresh_panels())
+		nyra.state_changed.connect(func(_state : CompanionNyra.State) -> void: _refresh_panels())
 
 	for side in [owner_side, other_side]:
 		side.health_changed.connect(func(_v : int) -> void: _refresh_panels())
