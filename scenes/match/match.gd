@@ -25,6 +25,8 @@ const RESULT_SETTLE := 0.3
 @onready var dice_roller : Control = $DiceRolling
 @onready var deck_and_hand : Control = $Player/DeckAndHand
 @onready var match_sync : MatchSync = $MatchSync
+@onready var spend_popup : StatusSpendPopup = $StatusSpendPopup
+@onready var player_status_row : StatusRow = $Player/PlayerResourceContainer/StatusRow
 
 ## The recorded result of this turn's offensive roll (raw face values).
 var offensive_roll : Array[int] = []
@@ -60,6 +62,11 @@ func _ready() -> void:
 	# her rather than losing the match.)
 	player.health_changed.connect(_on_combatant_health_changed)
 	opponent.health_changed.connect(_on_combatant_health_changed)
+	# Spending our own tokens (bug 60: Nyra's Bond heal any time; also TA). The
+	# opponent's mirror row stays display-only. Depleted tokens are swept when
+	# the popup closes.
+	player_status_row.token_pressed.connect(_on_own_token_pressed)
+	spend_popup.closed.connect(_on_spend_popup_closed)
 	# Neither board shows until the first turn declares whose it is.
 	player_skill_layout.hide()
 	opponent_skill_layout.hide()
@@ -414,8 +421,75 @@ func _on_defense_activated(skill : Skill) -> void:
 		_pending_attack.damage = maxi(before - defense.prevent_damage, 0)
 		print("[skills] defense prevented %d damage (%d -> %d)" % [
 				defense.prevent_damage, before, _pending_attack.damage])
+	# Bug 60: the huntress may send the landing damage to Nyra (or split it).
+	await _offer_damage_transfer(defender)
 	_resolve_pending_attack()
 	_end_phase_networked()
+
+
+# The huntress's defensive damage-transfer choice (bug 60), offered once the
+# defence has resolved and the final incoming damage is known — after pressing
+# the defensive skill, per the rules. Only when WE are the defender with an
+# active companion, there's damage to take, and Nyra can either survive the
+# whole hit or a Nyra's Bond allows a split. Applies the chosen shares and
+# zeroes the pending damage so _resolve_pending_attack doesn't apply it again
+# (it still applies the attack's inflicted statuses).
+func _offer_damage_transfer(defender : Combatant) -> void:
+	if _pending_attack == null or defender != player:
+		return
+	var n : int = _pending_attack.damage
+	var nyra : CompanionNyra = player.companion
+	if n <= 0 or nyra == null or not nyra.is_active():
+		return
+	var bond_held := player.has_status("nyras_bond")
+	if n > nyra.hp and not bond_held:
+		return   # she can't survive it and no Bond to split — the player just takes it
+	spend_popup.open_transfer(n, nyra.hp, nyra.companion_name, bond_held)
+	var shares : Array = await spend_popup.transfer_decided
+	var player_share : int = shares[0]
+	var nyra_share : int = shares[1]
+	var used_bond : bool = shares[2]
+	if player_share > 0:
+		(player as Player).update_player_health(-player_share)
+	if nyra_share > 0:
+		nyra.take_damage(nyra_share)
+	if used_bond:
+		player.remove_status_stacks("nyras_bond", 1)
+	_pending_attack.damage = 0
+	print("[match] damage transfer: you %d / %s %d%s" % [
+			player_share, nyra.companion_name, nyra_share, " (Bond)" if used_bond else ""])
+
+
+# --- spending our own tokens (bug 60: Nyra's Bond heal any time; also TA) --------
+
+func _on_own_token_pressed(token : StatusEffect) -> void:
+	var ctx := MatchSpendContext.new(self)
+	ctx.caster = player
+	ctx.opponent = opponent
+	ctx.incoming_damage = 0   # spending outside a defence: no damage to split
+	spend_popup.open(token, ctx)
+
+
+# Token spends mutate stacks directly (no combatant signal), so sweep any that
+# depleted and let the row rebuild once the popup closes.
+func _on_spend_popup_closed() -> void:
+	for status_id in player.status_effects.keys():
+		player.remove_status_stacks(status_id, 0)   # 0-removal just runs the purge
+
+
+# Board verbs a token spend needs, wired to this match's player/deck. Nyra's
+# Bond's heal acts on the companion directly (no verb); TA spends use these.
+class MatchSpendContext extends BoardContext:
+	var _match
+	func _init(m) -> void:
+		_match = m
+	func gain_cp(amount : int) -> void:
+		(_match.player as Player).update_player_cp(amount)
+	func draw_cards(amount : int) -> void:
+		await _match.deck_and_hand.draw_cards(amount)
+	func apply_status(status_id : String, stacks : int = 1, target = null) -> void:
+		var who = target if target != null else caster
+		who.apply_status(status_id, stacks)
 
 
 # The announced attack's target-requiring effects land on the defender —

@@ -7,6 +7,7 @@
 [ext_resource type="Script" uid="uid://c7tm4nqr8k2vs" path="res://scenes/match/turn_manager.gd" id="5_tmgr1"]
 [ext_resource type="Script" uid="uid://bmt4sync7k9qe" path="res://scenes/match/match_sync.gd" id="6_msync"]
 [ext_resource type="PackedScene" uid="uid://pofdkqvdq2ch" path="res://scenes/match/dice_rolling.tscn" id="7_dicer"]
+[ext_resource type="PackedScene" uid="uid://cspendpopscn7" path="res://scenes/match/components/status_effects/status_spend_popup.tscn" id="8_spend"]
 
 [node name="Match" type="Control" unique_id=827129721]
 layout_mode = 3
@@ -70,6 +71,10 @@ text = "Next Phase"
 visible = false
 layout_mode = 1
 auto_roll = false
+
+[node name="StatusSpendPopup" parent="." unique_id=1449021874 instance=ExtResource("8_spend")]
+visible = false
+layout_mode = 1
 
 [connection signal="button_down" from="EndMatch" to="." method="_on_end_match_button_down"]
 [connection signal="pressed" from="NextPhase" to="." method="_on_next_phase_pressed"]

@@ -14,6 +14,13 @@ const ICON_SIZE := Vector2(32, 32)
 
 ## The side whose tokens this row shows (set by player.tscn / opponent.tscn).
 @export var combatant : Combatant
+## When true the pills are live buttons that emit token_pressed on click — the
+## local player spending their own tokens. The replicated opponent row leaves
+## this false: their tokens are display-only.
+@export var interactive : bool = false
+
+## A live pill was clicked (interactive rows only).
+signal token_pressed(token : StatusEffect)
 
 
 func _ready() -> void:
@@ -50,7 +57,9 @@ func _build_pill(token : StatusEffect) -> Button:
 		icon = placeholder
 	pill.icon = icon
 	pill.expand_icon = true
-	pill.disabled = true          # a readout, not a control (spending lands later)
+	pill.disabled = not interactive   # display-only rows leave the pill inert
+	if interactive:
+		pill.pressed.connect(func() -> void: token_pressed.emit(token))
 	pill.custom_minimum_size = PILL_SIZE
 	pill.tooltip_text = "%s\n%s" % [token.status_name, token.description]
 	return pill

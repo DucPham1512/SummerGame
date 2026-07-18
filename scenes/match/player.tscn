@@ -89,6 +89,7 @@ size_flags_horizontal = 3
 [node name="StatusRow" parent="PlayerResourceContainer" unique_id=1409283746 node_paths=PackedStringArray("combatant") instance=ExtResource("7_srow")]
 layout_mode = 2
 combatant = NodePath("../..")
+interactive = true
 
 [node name="DecreaseHp" type="Button" parent="." unique_id=552300344]
 layout_mode = 0
