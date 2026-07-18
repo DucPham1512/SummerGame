@@ -67,6 +67,12 @@ func _ready() -> void:
 	# the popup closes.
 	player_status_row.token_pressed.connect(_on_own_token_pressed)
 	spend_popup.closed.connect(_on_spend_popup_closed)
+	# Dice cards (bug 58) reach the live roll through the roller: a card verb that
+	# changes the roll re-lights the skills via roll_modified, and helping_hand's
+	# pick becomes a cross-client forced reroll via opponent_reroll_requested.
+	deck_and_hand.dice_roller = dice_roller
+	dice_roller.roll_modified.connect(_on_roll_modified)
+	dice_roller.opponent_reroll_requested.connect(_on_opponent_reroll_requested)
 	# Neither board shows until the first turn declares whose it is.
 	player_skill_layout.hide()
 	opponent_skill_layout.hide()
@@ -328,6 +334,10 @@ func _run_offensive_roll() -> void:
 	dice_roller.set_result_visible(true)
 	var symbols := _tally_symbols(offensive_roll, player_skill_layout.character)
 	player_skill_layout.enable_selection(symbols, offensive_roll)
+	# Bug 58: the roll is now open to card modification, and replicated so the
+	# other player can watch it (and target it with helping_hand).
+	dice_roller.set_roll_live(true)
+	_broadcast_spectate(offensive_roll)
 
 
 # Face values -> {symbol: count} through the character's die (dice.json).
@@ -369,6 +379,59 @@ func _run_defensive_roll() -> void:
 	dice_roller.display_result(defensive_roll, defender_board.character)
 	dice_roller.set_result_visible(true)
 	defender_board.enable_only(defensive_skill)
+	# Bug 58: cards may still alter the defensive roll, and the attacker watches it.
+	dice_roller.set_roll_live(true)
+	_broadcast_spectate(defensive_roll)
+
+
+# --- bug 58: a card changed the live roll --------------------------------------
+
+# A card verb (change / reroll / extra attempt) rewrote the roll. Re-record it,
+# re-display it, and re-light the skills the new roll can pay so the pick reflects
+# reality. Only the side that OWNS the current roll acts; the change also
+# re-broadcasts to the spectating opponent.
+func _on_roll_modified(results : Array) -> void:
+	if _match_over:
+		return
+	var values : Array[int] = []
+	for v in results:
+		values.append(int(v))
+	match turn_manager.phase:
+		TurnManager.Phase.OFFENSIVE:
+			if turn_manager.active != player:
+				return   # not our roll
+			offensive_roll = values
+			dice_roller.display_result(values, player_skill_layout.character)
+			dice_roller.set_result_visible(true)
+			var symbols := _tally_symbols(values, player_skill_layout.character)
+			player_skill_layout.enable_selection(symbols, values)
+			_broadcast_spectate(values)
+		TurnManager.Phase.DEFENSIVE:
+			if turn_manager.active == player:
+				return   # we're the attacker, not the one rolling
+			defensive_roll = values
+			dice_roller.display_result(values, player_skill_layout.character)
+			dice_roller.set_result_visible(true)
+			var defense := player_skill_layout.defensive_skill()
+			if defense != null:
+				player_skill_layout.enable_only(defense)
+			_broadcast_spectate(values)
+
+
+# Replicate our current roll to the other client so they can watch it (and target
+# it with helping_hand); an empty list clears their view. Solo has no spectator.
+func _broadcast_spectate(values : Array) -> void:
+	if _is_solo():
+		return
+	match_sync.broadcast_spectate_roll(values, player_skill_layout.character)
+
+
+# We played helping_hand: relay the forced reroll to the roll owner's client.
+# Solo has no opponent client to drive, so this never fires there.
+func _on_opponent_reroll_requested(die_index : int) -> void:
+	if _is_solo():
+		return
+	match_sync.announce_force_reroll(die_index)
 
 
 # The defender pressed their defensive skill: activate it with the defensive
@@ -378,6 +441,7 @@ func _run_defensive_roll() -> void:
 func _on_defense_activated(skill : Skill) -> void:
 	player_skill_layout.clear_selection()
 	opponent_skill_layout.clear_selection()
+	dice_roller.set_roll_live(false)   # committing to the defense closes card mods
 	var defender : Combatant = opponent if turn_manager.active == player else player
 	var attacker : Combatant = turn_manager.active
 	var board : SkillLayout = opponent_skill_layout if defender == opponent else player_skill_layout
@@ -424,6 +488,7 @@ func _on_defense_activated(skill : Skill) -> void:
 	# Bug 60: the huntress may send the landing damage to Nyra (or split it).
 	await _offer_damage_transfer(defender)
 	_resolve_pending_attack()
+	_broadcast_spectate([])   # our defensive roll is spent — clear the attacker's view
 	_end_phase_networked()
 
 
@@ -541,12 +606,37 @@ func receive_defense_result(counter_damage : int, _undefendable : bool, status_i
 	print("[match] defense result: %d counter damage taken, %d status(es)" % [counter_damage, status_ids.size()])
 
 
+## The other client showed us their live roll (or an empty list to clear it), so
+## we can spectate it and target it with helping_hand (bug 58).
+func on_spectate_roll(values : Array, char_id : String) -> void:
+	if _match_over:
+		return
+	if values.is_empty():
+		dice_roller.clear_spectated_roll()
+		return
+	var typed : Array[int] = []
+	for v in values:
+		typed.append(int(v))
+	dice_roller.show_spectated_roll(typed, char_id)
+
+
+## A helping_hand from the other client: reroll one of OUR dice — but only while
+## our roll is still open (they may have played it just after we moved on). The
+## reroll fires our own roll_modified, so our skills re-light and the new roll
+## re-broadcasts to them.
+func receive_force_reroll(die_index : int) -> void:
+	if _match_over or not dice_roller.has_live_roll():
+		return
+	dice_roller.reroll_die_at(die_index)
+
+
 func _on_skill_chosen(skill : Skill) -> void:
 	# During the defensive window the pick IS the defense.
 	if turn_manager.phase == TurnManager.Phase.DEFENSIVE:
 		_on_defense_activated(skill)
 		return
 	player_skill_layout.clear_selection()
+	dice_roller.set_roll_live(false)   # committing to a skill closes card mods
 	var ctx := BoardContext.new()
 	ctx.caster = player
 	ctx.opponent = opponent
@@ -622,6 +712,7 @@ func _on_skill_chosen(skill : Skill) -> void:
 			offensive_roll = []
 			_run_offensive_roll()
 		else:
+			_broadcast_spectate([])   # offensive roll spent — clear the opponent's view
 			_end_phase_networked()
 
 

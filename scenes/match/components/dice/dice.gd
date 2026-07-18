@@ -40,14 +40,16 @@ func _ready() -> void:
 
 ## Rolls the die. Pass 1-6 to force a result (e.g. from networked game logic),
 ## or leave default for a local random roll. The result is authoritative; the
-## animation is pure presentation and never changes it.
-func roll(result: int = -1) -> void:
+## animation is pure presentation and never changes it. `fast` snaps onto the
+## chosen face almost instantly (a card forcing a value — bug 58), skipping the
+## toss arc and spin.
+func roll(result: int = -1, fast: bool = false) -> void:
 	if _rolling:
 		return
 	_rolling = true
 	if result < 1 or result > SIDES:
 		result = randi_range(1, SIDES)
-	_animate_roll(result)
+	_animate_roll(result, fast)
 
 
 func _frame_for_result(result: int) -> int:
@@ -55,15 +57,17 @@ func _frame_for_result(result: int) -> int:
 	return base + randi_range(0, FRAMES_PER_RESULT - 1)   # one of the 4 orientations
 
 
-func _animate_roll(result: int) -> void:
+func _animate_roll(result: int, fast: bool = false) -> void:
 	_result = result
 	var final_frame := _frame_for_result(result)
 	_final_frame = final_frame
 	# Spin a whole number of turns so the die settles upright (no resting rotation).
 	var final_angle := 0.0
-	var spin := TAU * spin_turns
-	var dur := roll_time * randf_range(0.85, 1.15)
-	var toss_height := randf_range(toss_height_min, toss_height_max)
+	# A forced value snaps in place: no spin, no arc, near-zero duration — just a
+	# brief face flicker before it locks onto the chosen frame.
+	var spin := 0.0 if fast else TAU * spin_turns
+	var dur := (0.08 if fast else roll_time) * randf_range(0.85, 1.15)
+	var toss_height := 0.0 if fast else randf_range(toss_height_min, toss_height_max)
 
 	rotation = 0.0
 	_base_x = position.x   # toss arcs relative to wherever the die currently sits
@@ -71,8 +75,10 @@ func _animate_roll(result: int) -> void:
 	_last_flicker_step = -1
 
 	# The throw lands at a random spot near the start; the gather slides it back.
-	var landing_x := _base_x + randf_range(-toss_scatter, toss_scatter)
-	var landing_y := _base_y + randf_range(-toss_scatter, toss_scatter)
+	# A fast (forced) snap has no gather after it, so it must land where it sits.
+	var scatter := 0.0 if fast else toss_scatter
+	var landing_x := _base_x + randf_range(-scatter, scatter)
+	var landing_y := _base_y + randf_range(-scatter, scatter)
 
 	var tween := create_tween().set_parallel(true)
 	# Toss up to the apex, then down to the landing spot (not back to the start).

@@ -261,3 +261,12 @@ func _new_motion_tween() -> Tween:
 ## than returning a fixed data struct, since card effects aren't standardizable.
 func resolve(_ctx: BoardContext) -> void:
 	pass
+
+
+## What a card needs on the table to do anything (bug 58). The play flow refuses
+## a card whose requirement isn't met — so it never spends CP on a no-op:
+## OWN needs a live roll of ours to modify, OPPONENT a spectated opponent roll.
+enum RollNeed { NONE, OWN, OPPONENT }
+
+func roll_need() -> RollNeed:
+	return RollNeed.NONE

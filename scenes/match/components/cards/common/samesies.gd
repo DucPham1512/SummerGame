@@ -9,6 +9,10 @@ func _init() -> void:
 	card_id = "samesies"
 
 
+func roll_need() -> RollNeed:
+	return RollNeed.OWN
+
+
 func resolve(ctx: BoardContext) -> void:
 	var source : int = await ctx.choose_die(ctx.caster)
 	var destination : int = await ctx.choose_die(ctx.caster)

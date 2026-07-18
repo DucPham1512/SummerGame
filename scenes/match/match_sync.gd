@@ -60,6 +60,8 @@ func _ready() -> void:
 	GDSync.expose_func(_remote_match_start)
 	GDSync.expose_func(_remote_incoming_attack)
 	GDSync.expose_func(_remote_defense_result)
+	GDSync.expose_func(_remote_spectate_roll)
+	GDSync.expose_func(_remote_force_reroll)
 
 	# Outward wiring: the local Player's public events land on the remote
 	# client's Opponent node (same path over there = their view of us).
@@ -250,3 +252,29 @@ func announce_defense_result(counter_damage : int, undefendable : bool, status_i
 
 func _remote_defense_result(counter_damage : int, undefendable : bool, status_ids : Array, status_stacks : Array) -> void:
 	owner.receive_defense_result(counter_damage, undefendable, status_ids, status_stacks)
+
+
+# --- roll spectate + forced reroll (bug 58) -------------------------------------
+# helping_hand needs the opponent's roll visible on our side and a way to force a
+# reroll on their authoritative client. Same same-node receiver pattern as the
+# combat announces: the call lands on the remote's MatchSync and delegates to the
+# match, which derives which side we are from the turn state.
+
+## match.gd (the roll owner) -> the other client: our current roll for them to
+## watch (an empty list clears their view).
+func broadcast_spectate_roll(values : Array, char_id : String) -> void:
+	GDSync.call_func(_remote_spectate_roll, values, char_id)
+
+
+func _remote_spectate_roll(values : Array, char_id : String) -> void:
+	owner.on_spectate_roll(values, char_id)
+
+
+## match.gd (the helping_hand player) -> the roll owner's client: force their die
+## at `die_index` to reroll (authoritatively, on the side that owns the roll).
+func announce_force_reroll(die_index : int) -> void:
+	GDSync.call_func(_remote_force_reroll, die_index)
+
+
+func _remote_force_reroll(die_index : int) -> void:
+	owner.receive_force_reroll(die_index)
