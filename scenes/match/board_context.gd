@@ -77,6 +77,16 @@ func copy_die_value(from_index: int, to_index: int, target = null) -> void:
 func grant_extra_roll(target = null) -> void:
 	_todo("grant_extra_roll(%s)" % target)
 
+# helping_hand: pick one of the OPPONENT's dice (their roll replicated to us) and
+# force them to reroll it on their own client. Split from choose_die/reroll_die —
+# which stay own-side — because this pair is inherently cross-client.
+func choose_opponent_die() -> int:
+	_todo("choose_opponent_die()")
+	return -1
+
+func force_opponent_reroll(die_index: int) -> void:
+	_todo("force_opponent_reroll(#%d)" % die_index)
+
 # --- character-kit verbs --------------------------------------------------------
 
 ## Advances the caster's own skill layout slot `slot_index` to its next kit

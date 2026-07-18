@@ -9,6 +9,10 @@ func _init() -> void:
 	card_id = "tip_it"
 
 
+func roll_need() -> RollNeed:
+	return RollNeed.OWN
+
+
 func resolve(ctx: BoardContext) -> void:
 	var die : int = await ctx.choose_die()
 	var increase : bool = await ctx.choose_option(["Increase by 1", "Decrease by 1"]) == 0

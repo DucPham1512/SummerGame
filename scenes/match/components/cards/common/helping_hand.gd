@@ -9,5 +9,9 @@ func _init() -> void:
 	card_id = "helping_hand"
 
 
+func roll_need() -> RollNeed:
+	return RollNeed.OPPONENT
+
+
 func resolve(ctx: BoardContext) -> void:
-	ctx.reroll_die(await ctx.choose_die(ctx.opponent))
+	ctx.force_opponent_reroll(await ctx.choose_opponent_die())

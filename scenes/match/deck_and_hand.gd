@@ -37,6 +37,11 @@ signal pile_refilled(pile_size : int)
 ## standalone harness = every drop is legal.
 var turn_manager : TurnManager
 
+## Injected by the match: the live dice roller, so card verbs can reroll / change
+## / read the dice (bug 58). Null in the standalone harness — the dice verbs then
+## fall back to BoardContext's warnings, and dice cards can't be play-gated.
+var dice_roller
+
 ## The public discard pile, top of pile = last element. Ids only — the card
 ## nodes are freed; an empty deck rebuilds itself from these (shuffled).
 var discard_pile : Array[String] = []
@@ -140,6 +145,16 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Phase gate: outside a legal window the card just glides back.
 	if turn_manager != null and not turn_manager.can_play(player, card.phase, card.phase_subtype):
 		return
+	# Dice cards need something to act on: a live roll of ours (change/reroll/extra)
+	# or a spectated opponent roll (helping_hand). Without it the card glides back —
+	# it never spends CP on a no-op, the core of bug 58.
+	match card.roll_need():
+		Card.RollNeed.OWN:
+			if dice_roller == null or not dice_roller.has_live_roll():
+				return
+		Card.RollNeed.OPPONENT:
+			if dice_roller == null or not dice_roller.has_spectated_roll():
+				return
 	# Rules 1.3: playing an action card pays its CP cost; unaffordable cards
 	# glide back.
 	if player != null and player.cp < card.cp_cost:
@@ -155,7 +170,7 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.
 	@warning_ignore("redundant_await")
-	await card.resolve(HandBoardContext.new(player, self))
+	await card.resolve(HandBoardContext.new(player, self, dice_roller))
 	discard_pile.append(card.card_id)   # resolved actions land on the pile
 	card.queue_free()
 
@@ -228,10 +243,12 @@ func _on_card_remove() -> void:
 # Superseded by the real Board context when the battle-phase system lands.
 class HandBoardContext extends BoardContext:
 	var _deck_and_hand
+	var _dice
 
-	func _init(p_caster, p_deck_and_hand) -> void:
+	func _init(p_caster, p_deck_and_hand, p_dice = null) -> void:
 		caster = p_caster
 		_deck_and_hand = p_deck_and_hand
+		_dice = p_dice
 
 	func gain_cp(amount : int) -> void:
 		if caster == null:
@@ -277,3 +294,74 @@ class HandBoardContext extends BoardContext:
 			super.upgrade_skill(slot_index)   # harness warning
 			return
 		_deck_and_hand.skill_layout.upgrade_slot(slot_index)
+
+	# --- dice-session verbs (bug 58) -----------------------------------------
+	# Delegate to the live roller. Without one (standalone harness) each falls
+	# back to BoardContext's placeholder warning, keeping the harness behaviour.
+
+	func reroll_die(die) -> void:
+		if _dice == null:
+			super.reroll_die(die)
+			return
+		_dice.reroll_die_at(int(die))
+
+	func change_die_value(die_index : int, value : int, _target = null) -> void:
+		if _dice == null:
+			super.change_die_value(die_index, value, _target)
+			return
+		_dice.set_die(die_index, value)
+
+	func adjust_die_value(die_index : int, delta : int, _target = null) -> void:
+		if _dice == null:
+			super.adjust_die_value(die_index, delta, _target)
+			return
+		_dice.bump_die(die_index, delta)
+
+	func copy_die_value(from_index : int, to_index : int, _target = null) -> void:
+		if _dice == null:
+			super.copy_die_value(from_index, to_index, _target)
+			return
+		_dice.copy_die(from_index, to_index)
+
+	func grant_extra_roll(_target = null) -> void:
+		if _dice == null:
+			super.grant_extra_roll(_target)
+			return
+		await _dice.extra_roll_attempt()
+
+	func roll_die() -> int:
+		if _dice == null:
+			return super.roll_die()
+		var results : Array = await _dice.roll_fresh(1)
+		return int(results[0]) if not results.is_empty() else 0
+
+	func choose_die(_target = null) -> int:
+		if _dice == null:
+			return super.choose_die(_target)
+		return await _dice.pick_own_die()
+
+	func choose_die_value() -> int:
+		if _dice == null:
+			return super.choose_die_value()
+		return await _dice.pick_value()
+
+	func choose_option(options : Array) -> int:
+		if _dice == null:
+			return super.choose_option(options)
+		return await _dice.pick_option(options)
+
+	# The roller-buff cards (one_more_time / better_d) only make sense for whoever
+	# is rolling, so a chosen player is always the caster (bug 58 decision).
+	func choose_player():
+		return caster
+
+	func choose_opponent_die() -> int:
+		if _dice == null:
+			return super.choose_opponent_die()
+		return await _dice.pick_spectated_die()
+
+	func force_opponent_reroll(die_index : int) -> void:
+		if _dice == null:
+			super.force_opponent_reroll(die_index)
+			return
+		_dice.request_opponent_reroll(die_index)

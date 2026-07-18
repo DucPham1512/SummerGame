@@ -9,5 +9,9 @@ func _init() -> void:
 	card_id = "better_d"
 
 
+func roll_need() -> RollNeed:
+	return RollNeed.OWN
+
+
 func resolve(ctx: BoardContext) -> void:
 	ctx.grant_extra_roll(await ctx.choose_player())
