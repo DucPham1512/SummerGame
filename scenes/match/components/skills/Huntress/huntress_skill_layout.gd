@@ -14,6 +14,19 @@ func _init() -> void:
 	character = "huntress"
 
 
+# Nyra buffs the huntress's offensive skill damage while active — the
+# character's own rule, so it lives on her board rather than in match.gd. The
+# companion owns HOW MUCH (amplify_offense); this override is the huntress
+# declaring she consults her companion on offense.
+func apply_offense_modifiers(effect : SkillEffect, caster : Combatant) -> void:
+	if caster.companion == null:
+		return
+	var amp := caster.companion.amplify_offense(effect)
+	if amp > 0:
+		print("[skills] %s amplifies damage by %d -> %d" % [
+				caster.companion.companion_name, amp, effect.damage])
+
+
 func _kit() -> Dictionary:
 	return {
 		"ultimate": "huntress_jungle_fury",

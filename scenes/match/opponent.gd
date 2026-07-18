@@ -140,7 +140,7 @@ func on_opponent_statuses(ids : Array, stacks : Array, limits : Array) -> void:
 func on_opponent_companion(hp : int, state : int) -> void:
 	if companion == null:
 		return
-	companion.sync_state(hp, state as Companion.State)
+	companion.sync_state(hp, state as CompanionNyra.State)
 
 
 ## Match setup: the real size of the opponent's deck (its composition is

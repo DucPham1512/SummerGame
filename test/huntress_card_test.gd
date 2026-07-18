@@ -2,12 +2,12 @@ extends Control
 
 # Manual harness for the 15 huntress cards, in the card_effect_test format —
 # but with a real HuntressSkillLayout on screen (so the 9 upgrade cards
-# visibly advance real slot stages) and a real Companion (so heal_companion
+# visibly advance real slot stages) and a real CompanionNyra (so heal_companion
 # has Nyra to heal). Every card pays its CP cost exactly like the match flow.
 
 var owner_side : Combatant
 var other_side : Combatant
-var nyra : Companion
+var nyra : CompanionNyra
 
 var cp_spin : SpinBox
 var target_select : OptionButton
@@ -34,12 +34,12 @@ func _ready() -> void:
 	other_side.health = other_side.max_hp
 	add_child(other_side)
 
-	nyra = Companion.create_for_character("huntress")
+	nyra = CompanionNyra.create_for_character("huntress")
 	if nyra != null:
 		add_child(nyra)
 		owner_side.companion = nyra
 		nyra.health_changed.connect(func(_hp : int) -> void: _refresh_panels())
-		nyra.state_changed.connect(func(_state : Companion.State) -> void: _refresh_panels())
+		nyra.state_changed.connect(func(_state : CompanionNyra.State) -> void: _refresh_panels())
 
 	for side in [owner_side, other_side]:
 		side.health_changed.connect(func(_v : int) -> void: _refresh_panels())
