@@ -94,16 +94,30 @@ func clear_status(status_id : String) -> void:
 	status_removed.emit(token)
 
 
-## Upkeep tick: triggers every owned token's on_upkeep hook, once per stack
-## (bleed rolls per stack), sequentially — hooks may await rolls. `ctx` is
-## scoped with this combatant as caster. Depleted tokens leave afterwards.
+## Upkeep tick: triggers the on_upkeep hook of every token that DECLARES upkeep
+## resolution (bug 56 — most statuses resolve elsewhere or not at all), once per
+## stack, sequentially since hooks may await. `ctx` is scoped with this combatant
+## as caster. Depleted tokens leave afterwards.
 func run_upkeep(ctx : BoardContext) -> void:
 	for token in status_effects.values():
+		if not token.resolves_on_upkeep():
+			continue
 		for i in token.stacks:
 			if token.is_depleted():
 				break
 			await token.on_upkeep(ctx)
 	_purge_depleted()
+
+
+## How many dice this side's upkeep needs in total, so the match can throw them
+## all in one roll before any hook resolves (letting instant-action cards modify
+## them first). Sums each upkeep-resolving token's per-stack need.
+func upkeep_dice_needed() -> int:
+	var total := 0
+	for token in status_effects.values():
+		if token.resolves_on_upkeep():
+			total += token.stacks * token.upkeep_dice_per_stack()
+	return total
 
 
 # Tokens shed stacks themselves (bleed's 5-6, protect's spend), so depletion is
