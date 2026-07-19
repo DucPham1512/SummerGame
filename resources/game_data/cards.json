@@ -124,7 +124,7 @@
       "character_id": null,
       "phase": "instant_action",
       "phase_subtype": null,
-      "cp_cost": 3,
+      "cp_cost": 2,
       "description": "Draw 3 cards."
     },
     {
