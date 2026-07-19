@@ -134,7 +134,25 @@ func spend_options(_ctx : BoardContext) -> Array[Dictionary]:
 	return []
 
 
-## Phase trigger: the match calls this during the owner's Upkeep Phase.
+## Whether this token resolves during the owner's Upkeep Phase. NOT every status
+## does — Constrict resolves in the Offensive Roll Phase, Protect is spend-anytime
+## with no expiry, Targeted is a passive damage rule — so the upkeep ticks only
+## the tokens that declare themselves here (bug 56). Bleed is the only one today.
+func resolves_on_upkeep() -> bool:
+	return false
+
+
+## How many dice this token's upkeep needs PER STACK, so the match can throw them
+## all in one roll before any hook runs. 0 = resolves without dice. Only consulted
+## when resolves_on_upkeep() is true.
+func upkeep_dice_per_stack() -> int:
+	return 0
+
+
+## Phase trigger: the match calls this during the owner's Upkeep Phase, once per
+## stack, and only when resolves_on_upkeep() is true. The dice are already thrown
+## by then (and may have been altered by an instant-action card), so ctx.roll_die()
+## hands back the FINAL value rather than rolling afresh.
 func on_upkeep(_ctx : BoardContext) -> void:
 	pass
 

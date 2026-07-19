@@ -458,12 +458,19 @@ func has_live_roll() -> bool:
 	return _roll_live
 
 
-# Every participating die's current value — the payload the match refreshes off.
-func _emit_modified() -> void:
+## Every participating die's value as it stands right now — including any change a
+## card made after the throw. The match reads this when it resolves a roll it let
+## the player modify first (bug 56's upkeep).
+func current_values() -> Array[int]:
 	var results : Array[int] = []
 	for i in active_count:
 		results.append(dice_result[i])
-	roll_modified.emit(results)
+	return results
+
+
+# The payload the match refreshes off whenever a card rewrites the roll.
+func _emit_modified() -> void:
+	roll_modified.emit(current_values())
 
 
 ## Force die `index` to `value` (change_die_value / six_it). The value is logic

@@ -20,9 +20,11 @@ const PHASE_ORDER : Array[Phase] = [
 	Phase.TARGETING, Phase.DEFENSIVE, Phase.MAIN_TWO, Phase.DISCARD,
 ]
 
-# The phases that wait for a decision; the rest resolve automatically.
+# The phases that wait for a decision; the rest resolve automatically. UPKEEP
+# waits too (bug 56): its status rolls land on the table and instant-action cards
+# may modify them, so the player confirms with Next Phase once they're done.
 const INTERACTIVE_PHASES : Array[Phase] = [
-	Phase.MAIN_ONE, Phase.OFFENSIVE, Phase.TARGETING,
+	Phase.UPKEEP, Phase.MAIN_ONE, Phase.OFFENSIVE, Phase.TARGETING,
 	Phase.DEFENSIVE, Phase.MAIN_TWO, Phase.DISCARD,
 ]
 

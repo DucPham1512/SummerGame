@@ -45,6 +45,13 @@ var _awaiting_defense : bool = false
 ## (or a peer leaving on the way out) from re-deciding an outcome we already
 ## have, and freezes the phase flow while the verdict settles.
 var _match_over : bool = false
+## Bug 56 — the Upkeep's status dice are on the table and the player is free to
+## alter them (tip_it) before anything resolves. Next Phase is their "done".
+var _upkeep_awaiting_confirm : bool = false
+## The upkeep dice are mid-throw: Next Phase must not end the phase before the
+## roll they're meant to confirm even exists.
+var _upkeep_rolling : bool = false
+signal _upkeep_confirmed
 
 
 func _ready() -> void:
@@ -214,6 +221,8 @@ func _on_turn_started(active : Combatant) -> void:
 	opponent_skill_layout.visible = active == opponent
 	_pending_attack = null       # nothing announced yet this turn
 	_awaiting_defense = false
+	_upkeep_awaiting_confirm = false   # no upkeep of ours is mid-resolution
+	_upkeep_rolling = false
 
 
 func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
@@ -232,19 +241,17 @@ func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
 		opponent_skill_layout.visible = active == opponent
 	match phase:
 		TurnManager.Phase.UPKEEP:
-			# Automatic. Start-of-turn ticks: status tokens trigger (bleed
-			# rolls, etc.), but ONLY for the local player — the opponent's
-			# upkeep runs on their client (their RNG) and its results arrive
-			# as replicated absolutes; rolling their mirror here would
-			# diverge. Placeholder context for now — verbs like roll_die /
-			# deal_damage warn until the real Board lands. Note the loop
-			# doesn't wait for this (fire-and-forget): async upkeeps need the
-			# TurnManager hold mechanism when they matter.
+			# Interactive (bug 56). Start-of-turn status ticks: the tokens that
+			# declare upkeep resolution throw their dice, which then sit on the
+			# table for instant-action cards to alter before anything resolves —
+			# the player presses Next Phase when done. ONLY for the local player:
+			# the opponent's upkeep rolls on their client (their RNG) and its
+			# results arrive as replicated absolutes; rolling their mirror here
+			# would diverge.
 			if active == player:
-				var ctx := BoardContext.new()
-				ctx.caster = player
-				ctx.opponent = opponent
-				player.run_upkeep(ctx)
+				_run_upkeep()
+			elif _is_solo():
+				_end_phase_networked()   # the mirror has no local upkeep to run
 		TurnManager.Phase.INCOME:
 			# Automatic (1.2): +1 CP (clamped at max) and draw 1 — the draw
 			# refills an empty deck from the discard pile first. The start
@@ -314,6 +321,95 @@ func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
 			# active side ends its own discard; the remote hears the
 			# replicated end_phase.
 			_try_finish_discard()
+
+
+# --- upkeep (bug 56) ------------------------------------------------------------
+
+# The Upkeep flow: throw every die this side's upkeep-resolving tokens need, leave
+# them on the table LIVE so instant-action cards (tip_it) can alter them, and only
+# resolve the tokens — against the final values — once the player presses Next
+# Phase. Resolving where the dice landed would make those cards pointless.
+func _run_upkeep() -> void:
+	var ctx := UpkeepContext.new(self)
+	ctx.caster = player
+	ctx.opponent = opponent
+	# Clamped to the roller's five dice; Bleed's stack limit of 2 keeps it well under.
+	var needed : int = mini(player.upkeep_dice_needed(), 5)
+	if needed > 0:
+		_upkeep_rolling = true
+		next_phase_button.disabled = true   # nothing to confirm until it lands
+		# Same shape as the defensive roll: one throw, no rerolls, dice stay out.
+		var values : Array[int] = await dice_roller.run(1, needed)
+		_upkeep_rolling = false
+		if _match_over or turn_manager.phase != TurnManager.Phase.UPKEEP:
+			return
+		dice_roller.display_result(values, player_skill_layout.character)
+		dice_roller.set_result_visible(true)
+		dice_roller.set_roll_live(true)   # tip_it's OWN roll_need guard now passes
+		_broadcast_spectate(values)
+		print("[match] upkeep: threw %d die/dice %s" % [needed, values])
+	# The player acts (instant cards); Next Phase is their confirmation.
+	_upkeep_awaiting_confirm = true
+	next_phase_button.disabled = not _next_phase_available()
+	await _upkeep_confirmed
+	if _match_over or turn_manager.phase != TurnManager.Phase.UPKEEP:
+		return
+	dice_roller.set_roll_live(false)   # the window is closed; these values are final
+	if needed > 0:
+		ctx.seed_rolls(dice_roller.current_values())
+		_broadcast_spectate([])
+	await player.run_upkeep(ctx)
+	_end_phase_networked()
+
+
+# Board verbs for the Upkeep Phase, replacing the placeholder context whose
+# roll_die returned 0 and whose deal_damage did nothing — which is why Bleed never
+# hurt anyone and (rolling a permanent "0") could never expire. The dice are thrown
+# and possibly card-modified BEFORE any hook runs, so roll_die hands back those
+# final values in order rather than rolling afresh; the status effects themselves
+# stay unchanged and unaware.
+class UpkeepContext extends BoardContext:
+	var _match
+	var _rolls : Array[int] = []
+	var _next : int = 0
+
+	func _init(m) -> void:
+		_match = m
+
+	## Hands the context the final dice, in throw order.
+	func seed_rolls(values : Array[int]) -> void:
+		_rolls = values.duplicate()
+		_next = 0
+
+	func roll_die() -> int:
+		if _next < _rolls.size():
+			var value : int = _rolls[_next]
+			_next += 1
+			return value
+		# A status asked for more dice than its upkeep_dice_per_stack() declared.
+		# Roll rather than hand back a silent 0 (the placeholder's exact bug), and
+		# say so, since the declaration is what the match sized the throw from.
+		push_warning("UpkeepContext: more roll_die() calls than dice thrown — rolling ad hoc")
+		return randi_range(1, 6)
+
+	func deal_damage(amount : int, target = null) -> void:
+		var who = target if target != null else caster
+		if who == _match.player:
+			# Through Player so the HP label updates and the absolute broadcasts.
+			(_match.player as Player).update_player_health(-amount)
+		else:
+			who.change_health(-amount)
+
+	func heal(amount : int, target = null) -> void:
+		var who = target if target != null else caster
+		if who == _match.player:
+			(_match.player as Player).update_player_health(amount)
+		else:
+			who.change_health(amount)
+
+	func apply_status(status_id : String, stacks : int = 1, target = null) -> void:
+		var who = target if target != null else caster
+		who.apply_status(status_id, stacks)
 
 
 # The offensive roll flow: dice UI up, one capped roll session (first toss +
@@ -397,6 +493,15 @@ func _on_roll_modified(results : Array) -> void:
 	for v in results:
 		values.append(int(v))
 	match turn_manager.phase:
+		TurnManager.Phase.UPKEEP:
+			# Bug 56: an instant-action card altered a status die. Nothing to
+			# re-light here — the new value is simply what the upkeep will resolve
+			# against when the player confirms.
+			if turn_manager.active != player:
+				return
+			dice_roller.display_result(values, player_skill_layout.character)
+			dice_roller.set_result_visible(true)
+			_broadcast_spectate(values)
 		TurnManager.Phase.OFFENSIVE:
 			if turn_manager.active != player:
 				return   # not our roll
@@ -719,6 +824,14 @@ func _on_skill_chosen(skill : Skill) -> void:
 func _on_next_phase_pressed() -> void:
 	if not _next_phase_available():
 		return
+	# Bug 56: during the Upkeep the press means "I'm done acting". The status
+	# effects still have to resolve — against the dice as they NOW stand, after any
+	# instant-action card — before the turn may advance, so hand back to
+	# _run_upkeep rather than ending the phase here.
+	if _upkeep_awaiting_confirm:
+		_upkeep_awaiting_confirm = false
+		_upkeep_confirmed.emit()
+		return
 	_end_phase_networked()
 
 
@@ -732,6 +845,10 @@ func _on_next_phase_pressed() -> void:
 # deck, so nothing ever reached the discard pile to reshuffle from (bug 64).
 func _next_phase_available() -> bool:
 	if not _my_phase_window() and not _is_solo():
+		return false
+	# Bug 56: the upkeep dice are still in the air — there is nothing to confirm
+	# yet, and a press here would end the phase before the roll it exists for.
+	if _upkeep_rolling:
 		return false
 	if turn_manager.phase == TurnManager.Phase.DISCARD and turn_manager.active == player:
 		return deck_and_hand.hand.get_hand_size() <= Util.one_v_one_hand_limit

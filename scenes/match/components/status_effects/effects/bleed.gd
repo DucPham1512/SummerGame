@@ -6,6 +6,14 @@ extends StatusEffect
 # token. One roll per on_upkeep call — if the match rules one roll per token,
 # it calls this once per stack.
 
+func resolves_on_upkeep() -> bool:
+	return true
+
+
+func upkeep_dice_per_stack() -> int:
+	return 1   # "roll 1 die" — one per token stack
+
+
 func on_upkeep(ctx : BoardContext) -> void:
 	var roll : int = await ctx.roll_die()
 	if roll <= 4:
