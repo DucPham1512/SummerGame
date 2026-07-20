@@ -176,6 +176,17 @@ func _start_match(local_first : bool) -> void:
 	deck_and_hand.draw_cards(Util.one_v_one_starting_hand_size)
 
 
+## Drops our match-ready flag on the way out of a match (called by match.gd as it
+## leaves). GD-Sync keeps a client's OWN player data across a lobby leave and
+## re-broadcasts it on the next join, so a stale match_ready=true would make the
+## NEXT match's readiness handshake fire before both clients are in the match
+## scene — starting one side while the other's MatchSync doesn't yet exist to
+## receive _remote_match_start, freezing the player who goes first (bug 67).
+## Cleared here, every match re-establishes readiness from scratch.
+func clear_ready_flag() -> void:
+	GDSync.player_erase_data(READY_KEY)
+
+
 # --- outward broadcasts ----------------------------------------------------------
 
 func _broadcast_health(health : int) -> void:
