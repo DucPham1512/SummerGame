@@ -944,6 +944,9 @@ func opponent_forfeited() -> void:
 # match_outcome once and clears it.
 func _leave_to_result(outcome : EventBus.Outcome) -> void:
 	EventBus.match_outcome = outcome
+	# Drop our readiness flag BEFORE leaving, so it can't carry into the next
+	# match's start handshake and freeze the player who goes first (bug 67).
+	match_sync.clear_ready_flag()
 	GDSync.lobby_leave()
 	get_tree().change_scene_to_packed(MatchResult)
 
