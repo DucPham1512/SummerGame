@@ -73,6 +73,14 @@ func apply_offense_modifiers(_effect : SkillEffect, _caster : Combatant) -> void
 	pass
 
 
+## Hook: the tokens this character's kit opens the match holding (the tactician's
+## 2 Tactical Advantage). Called once per side during match setup. Per-character
+## subclasses override; the base no-ops, so match setup stays character-agnostic
+## and a character with no opening tokens needs no override.
+func apply_starting_statuses(_combatant : Combatant) -> void:
+	pass
+
+
 func _populate() -> void:
 	var kit := _kit()
 	if kit.is_empty():

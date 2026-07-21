@@ -11,8 +11,17 @@ extends SkillLayout
 # defensive roll flow reads defensive_skill().
 
 
+## The tactician opens every match already holding Tactical Advantage (bug 68) —
+## his own kit rule, so it lives on his board rather than in match setup.
+const STARTING_TACTICAL_ADVANTAGE := 2
+
+
 func _init() -> void:
 	character = "tactician"
+
+
+func apply_starting_statuses(combatant : Combatant) -> void:
+	combatant.apply_status("tactical_advantage", STARTING_TACTICAL_ADVANTAGE)
 
 
 func _kit() -> Dictionary:
