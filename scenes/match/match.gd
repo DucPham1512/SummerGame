@@ -119,6 +119,12 @@ func assign_characters(player_char : String, opponent_char : String,
 	deck_and_hand.skill_layout = player_skill_layout
 	_setup_companion(player, player_char)
 	_setup_companion(opponent, opponent_char)
+	# Opening kit tokens (bug 68: the tactician's 2 Tactical Advantage). Each board
+	# declares its own, so this stays character-agnostic. Applied on both sides of
+	# both clients — deterministic, and the status broadcast replaces absolutes
+	# rather than adding, so the mirror lands on the same count.
+	player_skill_layout.apply_starting_statuses(player)
+	opponent_skill_layout.apply_starting_statuses(opponent)
 	if player_deck_code.is_empty():
 		player_deck_code = deck_and_hand.character_deck_code(player_char)
 	if opponent_deck_code.is_empty():
