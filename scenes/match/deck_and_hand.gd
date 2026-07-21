@@ -17,6 +17,13 @@ const FLY_TIME := 0.35
 ## moment the card left the hand.
 signal card_played(slot : int, card_id : String)
 signal card_sold(slot : int, card_id : String)
+## A card effect that lands on the OPPONENT (bug 72). The match relays it to their
+## client, which applies it to itself authoritatively — writing to our local mirror
+## would be cosmetic and overwritten by their next broadcast.
+signal card_effect_on_opponent(damage : int, status_ids : Array, status_stacks : Array)
+## An attack modifier (Pounce / Prowl) improving the attack already declared this
+## phase. The match folds it into that attack; it lands when the attack resolves.
+signal attack_modifier_added(damage : int, status_ids : Array, status_stacks : Array)
 signal cards_drawn(count : int)
 ## The deck ran dry and refilled from the discard pile (rules 1.2). Deck size
 ## is public info, so the mirror's counter — which only ever counts draws down —
@@ -41,6 +48,15 @@ var turn_manager : TurnManager
 ## / read the dice (bug 58). Null in the standalone harness — the dice verbs then
 ## fall back to BoardContext's warnings, and dice cards can't be play-gated.
 var dice_roller
+
+## Injected by the match: the opposing side, so a card's verbs can tell "aimed at
+## the opponent" from "aimed at me". Without it ctx.opponent was null and every
+## opponent-targeting card silently hit its own caster (bug 72).
+var opponent
+
+## Injected by the match: whether an attack modifier may be played right now (an
+## attack ability has been declared and is still open). Unset = no gating.
+var attack_modifier_gate : Callable = Callable()
 
 ## The public discard pile, top of pile = last element. Ids only — the card
 ## nodes are freed; an empty deck rebuilds itself from these (shuffled).
@@ -145,6 +161,11 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Phase gate: outside a legal window the card just glides back.
 	if turn_manager != null and not turn_manager.can_play(player, card.phase, card.phase_subtype):
 		return
+	# An attack modifier improves an attack you have already declared, so it is only
+	# legal once an attack ability is on the table. Otherwise it glides back unspent.
+	if card.is_attack_modifier() and attack_modifier_gate.is_valid() \
+			and not attack_modifier_gate.call():
+		return
 	# Dice cards need something to act on: a live roll of ours (change/reroll/extra)
 	# or a spectated opponent roll (helping_hand). Without it the card glides back —
 	# it never spends CP on a no-op, the core of bug 58.
@@ -170,7 +191,7 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.
 	@warning_ignore("redundant_await")
-	await card.resolve(HandBoardContext.new(player, self, dice_roller))
+	await card.resolve(HandBoardContext.new(player, self, dice_roller, opponent))
 	discard_pile.append(card.card_id)   # resolved actions land on the pile
 	card.queue_free()
 
@@ -245,10 +266,20 @@ class HandBoardContext extends BoardContext:
 	var _deck_and_hand
 	var _dice
 
-	func _init(p_caster, p_deck_and_hand, p_dice = null) -> void:
+	func _init(p_caster, p_deck_and_hand, p_dice = null, p_opponent = null) -> void:
 		caster = p_caster
 		_deck_and_hand = p_deck_and_hand
 		_dice = p_dice
+		opponent = p_opponent
+
+	# Effects aimed at the opponent can't be applied here: their HP and tokens are
+	# authoritative on THEIR client, so a local write would only touch our mirror
+	# and be overwritten by their next broadcast. Announce instead (bug 72).
+	func _announce_on_opponent(damage : int, status_ids : Array, status_stacks : Array) -> bool:
+		if _deck_and_hand == null:
+			return false
+		_deck_and_hand.card_effect_on_opponent.emit(damage, status_ids, status_stacks)
+		return true
 
 	func gain_cp(amount : int) -> void:
 		if caster == null:
@@ -266,12 +297,16 @@ class HandBoardContext extends BoardContext:
 		if who == null:
 			super.apply_status(status_id, stacks, target)   # harness warning
 			return
+		if who == opponent and _announce_on_opponent(0, [status_id], [stacks]):
+			return
 		who.apply_status(status_id, stacks)
 
 	func deal_damage(amount : int, target = null) -> void:
 		var who = target if target != null else caster
 		if who == null:
 			super.deal_damage(amount, target)   # harness warning
+			return
+		if who == opponent and _announce_on_opponent(amount, [], []):
 			return
 		who.change_health(-amount)
 
@@ -331,23 +366,29 @@ class HandBoardContext extends BoardContext:
 
 	func roll_die() -> int:
 		if _dice == null:
-			return super.roll_die()
+			return await super.roll_die()
 		var results : Array = await _dice.roll_fresh(1)
 		return int(results[0]) if not results.is_empty() else 0
 
+	## One throw of `count` dice (bug 72: Pounce's five, in a single roll).
+	func roll_dice(count : int) -> Array[int]:
+		if _dice == null:
+			return await super.roll_dice(count)
+		return await _dice.roll_fresh(count)
+
 	func choose_die(_target = null) -> int:
 		if _dice == null:
-			return super.choose_die(_target)
+			return await super.choose_die(_target)
 		return await _dice.pick_own_die()
 
 	func choose_die_value() -> int:
 		if _dice == null:
-			return super.choose_die_value()
+			return await super.choose_die_value()
 		return await _dice.pick_value()
 
 	func choose_option(options : Array) -> int:
 		if _dice == null:
-			return super.choose_option(options)
+			return await super.choose_option(options)
 		return await _dice.pick_option(options)
 
 	# The roller-buff cards (one_more_time / better_d) only make sense for whoever
@@ -357,7 +398,7 @@ class HandBoardContext extends BoardContext:
 
 	func choose_opponent_die() -> int:
 		if _dice == null:
-			return super.choose_opponent_die()
+			return await super.choose_opponent_die()
 		return await _dice.pick_spectated_die()
 
 	func force_opponent_reroll(die_index : int) -> void:
@@ -365,3 +406,19 @@ class HandBoardContext extends BoardContext:
 			super.force_opponent_reroll(die_index)
 			return
 		_dice.request_opponent_reroll(die_index)
+
+	# --- attack modifiers ----------------------------------------------------
+	# These never touch a combatant: they hand the numbers to the match, which
+	# folds them into the attack already declared this phase.
+
+	func add_attack_damage(amount : int) -> void:
+		if _deck_and_hand == null:
+			super.add_attack_damage(amount)
+			return
+		_deck_and_hand.attack_modifier_added.emit(amount, [], [])
+
+	func add_attack_status(status_id : String, stacks : int = 1) -> void:
+		if _deck_and_hand == null:
+			super.add_attack_status(status_id, stacks)
+			return
+		_deck_and_hand.attack_modifier_added.emit(0, [status_id], [stacks])

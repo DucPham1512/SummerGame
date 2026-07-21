@@ -270,3 +270,10 @@ enum RollNeed { NONE, OWN, OPPONENT }
 
 func roll_need() -> RollNeed:
 	return RollNeed.NONE
+
+
+## Whether this card improves an attack the player has ALREADY declared, rather
+## than doing something on its own (Pounce, Prowl). Such a card is only legal once
+## an attack ability has been chosen, and its effects ride that attack.
+func is_attack_modifier() -> bool:
+	return false

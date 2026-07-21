@@ -530,9 +530,25 @@ func extra_roll_attempt() -> void:
 
 
 ## A standalone roll of `count` dice for a card that rolls its own dice
-## (vegas_baby). Shows the roller, throws once, returns the values, hides again —
-## it never touches the phase roll or the live-roll flag.
+## (vegas_baby, Pounce). There is only one set of dice in the scene, so this
+## BORROWS them: the phase roll's values, count, phase and visibility are captured
+## up front and restored afterwards, with each die snapped silently back to its
+## recorded face. Without that, a card roll wiped the offensive roll's dice and
+## left active_count wrong (bug 72). Never touches the live-roll flag.
 func roll_fresh(count : int) -> Array[int]:
+	var prev_result := dice_result.duplicate()
+	var prev_count := active_count
+	var prev_phase := phase
+	var prev_visible := visible
+	var prev_result_visible := roll_result.visible
+	# The interactive furniture MUST be restored too. _set_table_visible(true)
+	# below raises the full-rect modal ClickCatcher; leaving it up after the card's
+	# roll swallows every click on this client while the opponent plays on — a
+	# dead UI with no error to show for it (bug 72).
+	var prev_catcher := _click_catcher.visible
+	var prev_roll_btn := _roll_button.visible
+	var prev_keep_btn := _keep_button.visible
+
 	show()
 	set_active_count(count)
 	_set_table_visible(true)
@@ -544,11 +560,24 @@ func roll_fresh(count : int) -> Array[int]:
 		update_die_visual(index)
 	await toss_all(_active_mask())
 	await gather_to_grid()
-	phase = Phase.IDLE
 	var results : Array[int] = []
 	for i in count:
 		results.append(dice_result[i])
-	hide()
+
+	# Hand the table back exactly as we found it.
+	dice_result = prev_result
+	set_active_count(prev_count)
+	phase = prev_phase
+	for i in prev_count:
+		if dice_result[i] >= 1:
+			# Fast path: snaps the face without emitting roll_modified, so the
+			# match never mistakes a borrowed roll for a modified phase roll.
+			dice[i].roll(dice_result[i], true)
+	_click_catcher.visible = prev_catcher
+	_roll_button.visible = prev_roll_btn
+	_keep_button.visible = prev_keep_btn
+	roll_result.visible = prev_result_visible
+	visible = prev_visible
 	return results
 
 

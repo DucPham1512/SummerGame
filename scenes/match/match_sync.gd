@@ -62,6 +62,7 @@ func _ready() -> void:
 	GDSync.expose_func(_remote_defense_result)
 	GDSync.expose_func(_remote_spectate_roll)
 	GDSync.expose_func(_remote_force_reroll)
+	GDSync.expose_func(_remote_card_effect)
 
 	# Outward wiring: the local Player's public events land on the remote
 	# client's Opponent node (same path over there = their view of us).
@@ -289,3 +290,14 @@ func announce_force_reroll(die_index : int) -> void:
 
 func _remote_force_reroll(die_index : int) -> void:
 	owner.receive_force_reroll(die_index)
+
+
+## match.gd (the card player) -> the target's client: a card's damage/statuses,
+## applied there authoritatively (bug 72). Same immediate-apply shape as
+## announce_defense_result — writing to our local mirror would be cosmetic.
+func announce_card_effect(damage : int, status_ids : Array, status_stacks : Array) -> void:
+	GDSync.call_func(_remote_card_effect, damage, status_ids, status_stacks)
+
+
+func _remote_card_effect(damage : int, status_ids : Array, status_stacks : Array) -> void:
+	owner.receive_card_effect(damage, status_ids, status_stacks)
