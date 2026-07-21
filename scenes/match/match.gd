@@ -80,6 +80,9 @@ func _ready() -> void:
 	deck_and_hand.dice_roller = dice_roller
 	dice_roller.roll_modified.connect(_on_roll_modified)
 	dice_roller.opponent_reroll_requested.connect(_on_opponent_reroll_requested)
+	# Constrict (bug 71): every reroll of our own offensive dice consults this,
+	# paying 1 CP each while the token is held and refusing when we can't.
+	dice_roller.reroll_gate = _constrict_reroll_gate
 	# Neither board shows until the first turn declares whose it is.
 	player_skill_layout.hide()
 	opponent_skill_layout.hide()
@@ -523,6 +526,23 @@ func _on_roll_modified(results : Array) -> void:
 			_broadcast_spectate(values)
 
 
+# Constrict (bug 71): while the local player holds it, each reroll of their own
+# dice during their Offensive Roll Phase costs 1 CP; with none to pay, the reroll
+# is refused. Consulted by the dice roller before any reroll proceeds; returns
+# whether it may. Only our own offensive rerolls are taxed — defensive and upkeep
+# throws are single-roll anyway, and the opponent's rerolls run on their client.
+func _constrict_reroll_gate() -> bool:
+	if turn_manager.phase != TurnManager.Phase.OFFENSIVE or turn_manager.active != player:
+		return true
+	if not player.has_status("constrict"):
+		return true
+	if player.cp < Constrict.EXTRA_ROLL_CP:
+		return false
+	(player as Player).update_player_cp(-Constrict.EXTRA_ROLL_CP)
+	print("[match] Constrict: reroll cost %d CP (cp now %d)" % [Constrict.EXTRA_ROLL_CP, player.cp])
+	return true
+
+
 # Replicate our current roll to the other client so they can watch it (and target
 # it with helping_hand); an empty list clears their view. Solo has no spectator.
 func _broadcast_spectate(values : Array) -> void:
@@ -870,6 +890,16 @@ func _is_solo() -> bool:
 # Ends the current phase on both clients: locally at once, remotely via the
 # replicated call (matching NodePaths land it on their mirrored TurnManager).
 func _end_phase_networked() -> void:
+	# Bug 71: statuses that resolve at the Offensive Roll Phase's conclusion
+	# (Constrict expires) tick here — on the active, authoritative side, once. Both
+	# offensive endings (skill chosen / phase passed) route through here, while
+	# Profiteer's extra offensive phase re-rolls WITHOUT ending the phase, so this
+	# fires exactly at the true conclusion. The removal broadcasts like any status.
+	if turn_manager.phase == TurnManager.Phase.OFFENSIVE:
+		var ctx := BoardContext.new()
+		ctx.caster = turn_manager.active
+		ctx.opponent = opponent if turn_manager.active == player else player
+		turn_manager.active.run_roll_phase_end(ctx)
 	print("[match] ending phase: %s (%s active)" % [
 			TurnManager.Phase.keys()[turn_manager.phase], turn_manager.active.name])
 	turn_manager.end_phase()

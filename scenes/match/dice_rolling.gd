@@ -79,6 +79,11 @@ var _roll_live: bool = false
 ## Empty when the opponent isn't showing a roll.
 var _spectated_values: Array[int] = []
 
+## Consulted right before a reroll actually happens (bug 71): returns whether it
+## may proceed, charging any cost as a side effect. The match installs Constrict's
+## CP surcharge here; unset (harness) means every reroll is free and allowed.
+var reroll_gate: Callable = Callable()
+
 
 func _ready() -> void:
 	dice_result.resize(DICE_COUNT)
@@ -280,6 +285,10 @@ func _park_unselected_to_corner() -> void:
 func reroll_selected() -> void:
 	if re_roll_mask == 0:
 		return   # nothing selected, nothing to reroll
+	# Bug 71: a reroll surcharge (Constrict) may refuse this attempt. Checked after
+	# the empty-mask guard so a no-op press is never charged.
+	if reroll_gate.is_valid() and not reroll_gate.call():
+		return
 	phase = Phase.ANIMATING
 	rolls_used += 1
 	await _park_unselected_to_corner()
@@ -495,6 +504,9 @@ func copy_die(from_index : int, to_index : int) -> void:
 ## Reroll a single die to a fresh random face with the full toss (try_try_again,
 ## and the owner side of helping_hand).
 func reroll_die_at(index : int) -> void:
+	# Bug 71: taxed like any other reroll of your dice; refused if unaffordable.
+	if reroll_gate.is_valid() and not reroll_gate.call():
+		return
 	dice_result[index] = randi_range(1, SIDES)
 	dice[index].roll(dice_result[index])
 	_emit_modified()
