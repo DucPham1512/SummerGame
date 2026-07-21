@@ -120,6 +120,16 @@ func upkeep_dice_needed() -> int:
 	return total
 
 
+## Roll-phase-end tick (bug 71): fires every token's on_roll_phase_end hook — the
+## base is a no-op, Constrict removes its stacks here — then sweeps any that
+## depleted, so the emptied token leaves and its status_removed replicates. The
+## match calls this on the active side as the Offensive Roll Phase concludes.
+func run_roll_phase_end(ctx : BoardContext) -> void:
+	for token in status_effects.values():
+		token.on_roll_phase_end(ctx)
+	_purge_depleted()
+
+
 # Tokens shed stacks themselves (bleed's 5-6, protect's spend), so depletion is
 # swept here rather than trusted to every code path that touches stacks.
 func _purge_depleted() -> void:
