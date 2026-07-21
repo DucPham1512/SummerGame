@@ -41,6 +41,12 @@ var _pending_attack : SkillEffect = null
 ## waiting for the defender to resolve it — they own the DEFENSIVE window and
 ## drive it to MAIN_TWO. Solo never sets this (it uses _pending_attack).
 var _awaiting_defense : bool = false
+## The attack we have DECLARED this offensive phase but not yet sent: the chosen
+## skill's target-facing remainder, still open to attack modifiers (Pounce /
+## Prowl). Dispatched once, with its final numbers, when the phase ends — "all
+## damage is calculated at the end of the phase". Null when no attack is on the
+## table, which is also what gates the modifier cards.
+var _outgoing_attack : SkillEffect = null
 ## Latched the moment the match is decided: stops the second combatant's zero
 ## (or a peer leaving on the way out) from re-deciding an outcome we already
 ## have, and freezes the phase flow while the verdict settles.
@@ -78,6 +84,15 @@ func _ready() -> void:
 	# changes the roll re-lights the skills via roll_modified, and helping_hand's
 	# pick becomes a cross-client forced reroll via opponent_reroll_requested.
 	deck_and_hand.dice_roller = dice_roller
+	# Cards aimed at the opponent (bug 72): the hand needs to know who that is, and
+	# their effects are announced to the opponent's own client rather than written
+	# to our mirror.
+	deck_and_hand.opponent = opponent
+	deck_and_hand.card_effect_on_opponent.connect(_on_card_effect_on_opponent)
+	# Attack modifiers (Pounce / Prowl): legal only once an attack is declared, and
+	# they fold into that attack rather than hitting on their own.
+	deck_and_hand.attack_modifier_gate = _attack_modifier_playable
+	deck_and_hand.attack_modifier_added.connect(_on_attack_modifier_added)
 	dice_roller.roll_modified.connect(_on_roll_modified)
 	dice_roller.opponent_reroll_requested.connect(_on_opponent_reroll_requested)
 	# Constrict (bug 71): every reroll of our own offensive dice consults this,
@@ -230,6 +245,7 @@ func _on_turn_started(active : Combatant) -> void:
 	opponent_skill_layout.visible = active == opponent
 	_pending_attack = null       # nothing announced yet this turn
 	_awaiting_defense = false
+	_outgoing_attack = null      # no attack declared and awaiting modifiers
 	_upkeep_awaiting_confirm = false   # no upkeep of ours is mid-resolution
 	_upkeep_rolling = false
 
@@ -737,6 +753,31 @@ func receive_defense_result(counter_damage : int, _undefendable : bool, status_i
 	print("[match] defense result: %d counter damage taken, %d status(es)" % [counter_damage, status_ids.size()])
 
 
+# A card we played lands damage/statuses on the OPPONENT (bug 72). Their side is
+# authoritative on their own client, so announce it there; solo has no second
+# client, so the mirror is applied directly.
+func _on_card_effect_on_opponent(damage : int, status_ids : Array, status_stacks : Array) -> void:
+	if _is_solo():
+		if damage > 0:
+			(opponent as Opponent).on_opponent_health(opponent.health - damage)
+		for i in status_ids.size():
+			opponent.apply_status(status_ids[i], int(status_stacks[i]))
+		return
+	match_sync.announce_card_effect(damage, status_ids, status_stacks)
+
+
+## A card the opponent played lands on US. Applied to our own side authoritatively
+## — the resulting HP/tokens broadcast back as absolutes like anything else.
+func receive_card_effect(damage : int, status_ids : Array, status_stacks : Array) -> void:
+	if _match_over:
+		return
+	if damage > 0:
+		(player as Player).update_player_health(-damage)
+	for i in status_ids.size():
+		player.apply_status(status_ids[i], int(status_stacks[i]))
+	print("[match] opponent's card hit us for %d, %d status(es)" % [damage, status_ids.size()])
+
+
 ## The other client showed us their live roll (or an empty list to clear it), so
 ## we can spectate it and target it with helping_hand (bug 58).
 func on_spectate_roll(values : Array, char_id : String) -> void:
@@ -810,18 +851,12 @@ func _on_skill_chosen(skill : Skill) -> void:
 	# defensive phase (1.6). Solo keeps it locally; multiplayer announces it
 	# to the defender, who owns the DEFENSIVE window and resolves it against
 	# their own (authoritative) side.
+	# An attack (damage and/or an infliction on the opponent) is DECLARED, not sent:
+	# it stays open to attack modifiers until the phase ends, then goes out once
+	# with its final numbers. A non-attack ability leaves nothing to modify.
 	var attack_out := skill_effect.damage > 0 or not skill_effect.inflict_on_opponent.is_empty()
 	if attack_out:
-		if _is_solo():
-			_pending_attack = skill_effect
-		else:
-			_awaiting_defense = true
-			var ids : Array = []
-			var stacks : Array = []
-			for status in skill_effect.inflict_on_opponent:
-				ids.append(status.status_id)
-				stacks.append(status.stacks)
-			match_sync.announce_attack(skill_effect.damage, skill_effect.undefendable, ids, stacks)
+		_outgoing_attack = skill_effect
 	var self_ids : Array[String] = []
 	for status in skill_effect.grant_to_self:
 		self_ids.append("%s x%d" % [status.status_id, status.stacks])
@@ -832,19 +867,63 @@ func _on_skill_chosen(skill : Skill) -> void:
 			skill.skill_id, skill_effect.damage, self_ids, inflict_ids,
 			skill_effect.stack_limit_delta, skill_effect.max_out_self,
 			attack_out])
-	# Announcing the ability concludes the roll window: on to targeting /
-	# defensive without needing a Next Phase press — unless the effect grants
-	# an additional Offensive Roll Phase (Profiteer's medal branch): same
-	# window, fresh roll session, new pick.
-	if turn_manager.phase == TurnManager.Phase.OFFENSIVE:
-		if skill_effect.extra_offensive_phase:
-			print("[skills] extra offensive roll phase granted")
-			dice_roller.clear_result()
-			offensive_roll = []
-			_run_offensive_roll()
-		else:
-			_broadcast_spectate([])   # offensive roll spent — clear the opponent's view
-			_end_phase_networked()
+	# Choosing the ability no longer ends the phase: attack modifiers are played
+	# AFTER the attack is declared, so the window has to stay open. The player
+	# advances with Next Phase, which is what dispatches the finished attack.
+	# Profiteer's medal branch still re-opens the roll in the same window.
+	if turn_manager.phase == TurnManager.Phase.OFFENSIVE and skill_effect.extra_offensive_phase:
+		print("[skills] extra offensive roll phase granted")
+		dice_roller.clear_result()
+		offensive_roll = []
+		_run_offensive_roll()
+
+
+# --- attack modifiers (Pounce / Prowl) -------------------------------------------
+# A modifier improves the attack you have ALREADY declared this phase, so the
+# attack is held from the moment the skill is chosen until the phase ends, and
+# only then goes out — carrying the modified totals in one announce.
+
+# The declared attack leaves the table. Solo resolves it locally; multiplayer
+# announces the FINAL numbers to the defender, who owns the defensive window.
+func _dispatch_outgoing_attack() -> void:
+	if _outgoing_attack == null:
+		return
+	var effect := _outgoing_attack
+	_outgoing_attack = null
+	if _is_solo():
+		_pending_attack = effect
+	else:
+		_awaiting_defense = true
+		var ids : Array = []
+		var stacks : Array = []
+		for status in effect.inflict_on_opponent:
+			ids.append(status.status_id)
+			stacks.append(status.stacks)
+		match_sync.announce_attack(effect.damage, effect.undefendable, ids, stacks)
+	print("[skills] attack sent: %d damage%s, %d status(es)" % [
+			effect.damage, " (undefendable)" if effect.undefendable else "",
+			effect.inflict_on_opponent.size()])
+
+
+# A modifier card resolved: fold it into the declared attack. Only the numbers
+# move — `undefendable` is never rewritten, so a modifier can't change the damage
+# type (6 undefendable + 3 = 9 undefendable).
+func _on_attack_modifier_added(damage : int, status_ids : Array, status_stacks : Array) -> void:
+	if _outgoing_attack == null:
+		push_warning("Match: attack modifier resolved with no declared attack — ignored")
+		return
+	_outgoing_attack.damage += damage
+	for i in status_ids.size():
+		_outgoing_attack.inflict_on_opponent.append(
+				StatusEffect.new(status_ids[i], int(status_stacks[i])))
+	print("[cards] attack modifier: +%d damage, %d status(es) -> attack now %d" % [
+			damage, status_ids.size(), _outgoing_attack.damage])
+
+
+# Whether an attack modifier may be played right now: our own declared attack is
+# still on the table. Consulted by the hand before a modifier card is paid for.
+func _attack_modifier_playable() -> bool:
+	return _outgoing_attack != null and turn_manager.active == player
 
 
 func _on_next_phase_pressed() -> void:
@@ -902,6 +981,7 @@ func _end_phase_networked() -> void:
 	# Profiteer's extra offensive phase re-rolls WITHOUT ending the phase, so this
 	# fires exactly at the true conclusion. The removal broadcasts like any status.
 	if turn_manager.phase == TurnManager.Phase.OFFENSIVE:
+		_dispatch_outgoing_attack()
 		var ctx := BoardContext.new()
 		ctx.caster = turn_manager.active
 		ctx.opponent = opponent if turn_manager.active == player else player

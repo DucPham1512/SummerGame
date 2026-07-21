@@ -82,10 +82,23 @@ func grant_extra_roll(target = null) -> void:
 # which stay own-side — because this pair is inherently cross-client.
 func choose_opponent_die() -> int:
 	_todo("choose_opponent_die()")
+	await _suspend()
 	return -1
 
 func force_opponent_reroll(die_index: int) -> void:
 	_todo("force_opponent_reroll(#%d)" % die_index)
+
+# --- attack modifiers -------------------------------------------------------------
+# Improve the attack the caster has ALREADY declared this phase (Pounce, Prowl):
+# the numbers are added to it and land when that attack resolves, rather than
+# hitting on their own. Modifiers never change the damage TYPE — an undefendable
+# attack stays undefendable.
+
+func add_attack_damage(amount: int) -> void:
+	_todo("add_attack_damage(+%d)" % amount)
+
+func add_attack_status(status_id: String, stacks: int = 1) -> void:
+	_todo("add_attack_status(%s x%d)" % [status_id, stacks])
 
 # --- character-kit verbs --------------------------------------------------------
 
@@ -96,11 +109,27 @@ func upgrade_skill(slot_index: int) -> void:
 	_todo("upgrade_skill(slot %d)" % slot_index)
 
 # Value-returning / interactive verbs. In the real context these are coroutines
-# (await a synced RNG roll or a networked choice); the placeholders return
-# defaults so they can be called without a Board.
+# (await a roll animation or a player's pick); the placeholders return defaults so
+# they can be called without a Board.
+#
+# They are DECLARED as coroutines (each yields via _suspend) even though the
+# placeholder has nothing to wait for. Callers write `await ctx.roll_die()` with
+# ctx statically typed as BoardContext, so GDScript compiles that await against
+# THIS declaration: if the base isn't a coroutine the await is compiled away and
+# the caller is handed the coroutine object instead of the value, which then
+# explodes at the next typed parameter (bug 72 — Pounce's "Cannot convert argument
+# 1 from Object to int"). Overrides may be plain functions; awaiting those is fine.
 func roll_die() -> int:
 	_todo("roll_die()")
+	await _suspend()
 	return 0
+
+## Rolls `count` dice at once and returns their values — one throw, not `count`
+## separate ones (bug 72: Pounce rolls 5 dice as a single roll).
+func roll_dice(count: int) -> Array[int]:
+	_todo("roll_dice(%d)" % count)
+	await _suspend()
+	return []
 
 func choose_player():
 	_todo("choose_player()")
@@ -112,15 +141,24 @@ func choose_status(target = null) -> String:
 
 func choose_die(target = null) -> int:
 	_todo("choose_die(%s)" % target)
+	await _suspend()
 	return -1
 
 func choose_die_value() -> int:
 	_todo("choose_die_value()")
+	await _suspend()
 	return 6
 
 func choose_option(options: Array) -> int:
 	_todo("choose_option(%s)" % [options])
+	await _suspend()
 	return 0
+
+
+# The single yield that marks the verbs above as coroutines. The placeholder has
+# nothing real to wait for, so this is just one frame.
+func _suspend() -> void:
+	await Engine.get_main_loop().process_frame
 
 
 func _todo(call_desc: String) -> void:
