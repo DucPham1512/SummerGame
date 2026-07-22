@@ -126,11 +126,16 @@ func on_opponent_statuses(ids : Array, stacks : Array, limits : Array) -> void:
 		var stale : StatusEffect = status_effects[status_id]
 		status_effects.erase(status_id)
 		status_removed.emit(stale)
+		stale.owner_combatant = null
 	for i in ids.size():
 		var token := StatusEffect.create(ids[i], 0)
 		token.stack_limit = int(limits[i])
+		# Fill it BEFORE adopting it: an owned token announces every stack move,
+		# and a wholesale rebuild should read as one status_applied per token,
+		# not a change followed by an applied.
 		token.add_stacks(int(stacks[i]))
 		status_effects[ids[i]] = token
+		token.owner_combatant = self
 		status_applied.emit(token)
 
 

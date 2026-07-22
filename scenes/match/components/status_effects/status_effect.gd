@@ -32,8 +32,11 @@ var stack_limit : int = 1
 var transferable : bool = true
 
 var stacks : int = 0
-var stack_label : Label
 var picture_panel : Texture2D
+## The board this token sits on, set by the Combatant when the token joins its
+## status_effects (and cleared when it leaves). Null while unowned — intent
+## payloads (SkillEffect) and tests hold tokens no board has adopted.
+var owner_combatant : Combatant = null
 ## Factory: builds the behaviour subclass registered for the id, or a base
 ## data-only instance when there is none. Prefer this over new() for tokens a
 ## player actually owns; plain new() is fine for intent payloads (SkillEffect).
@@ -80,7 +83,8 @@ func load_data() -> bool:
 func add_stacks(amount : int) -> int:
 	var before := stacks
 	stacks = clampi(stacks + amount, 0, stack_limit)
-	_refresh_label()
+	if stacks != before:
+		_announce()
 	return stacks - before
 
 
@@ -88,15 +92,19 @@ func add_stacks(amount : int) -> int:
 func remove_stacks(amount : int) -> int:
 	var before := stacks
 	stacks = clampi(stacks - amount, 0, stack_limit)
-	_refresh_label()
+	if stacks != before:
+		_announce()
 	return before - stacks
 
 
-# The label is optional: it's assigned by the token's UI when one exists, and
-# stack changes must also work headless (tests, effects resolving off-screen).
-func _refresh_label() -> void:
-	if is_instance_valid(stack_label):
-		stack_label.text = "x%d" % stacks
+# Tells the board the count moved. Effects shed their own stacks (bleed's 5-6, a
+# Protect/TA/Bond spend, constrict expiring) without going through the
+# combatant, so announcing HERE is what keeps the token row and the netcode in
+# step — neither polls, both listen for Combatant's status signals (bug 81).
+# Silent when unowned, so tokens off the board still work headless.
+func _announce() -> void:
+	if is_instance_valid(owner_combatant):
+		owner_combatant.on_token_stacks_changed(self)
 
 
 func is_depleted() -> bool:
