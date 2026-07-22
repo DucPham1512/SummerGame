@@ -191,7 +191,7 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.
 	@warning_ignore("redundant_await")
-	await card.resolve(HandBoardContext.new(player, self, dice_roller, opponent))
+	await card.resolve(make_board_context())
 	discard_pile.append(card.card_id)   # resolved actions land on the pile
 	card.queue_free()
 
@@ -262,6 +262,16 @@ func _on_card_remove() -> void:
 # need, wired to what exists today (player resources, this deck and hand).
 # Anything else falls through to BoardContext's loud placeholder warnings.
 # Superseded by the real Board context when the battle-phase system lands.
+## The board context this side's plays resolve through: the dice session, this
+## deck, and the announce path for anything aimed at the opponent. Status-token
+## spends borrow it too (bug 69) — Tactical Advantage is spendable at any time,
+## so "spend a token to re-roll a die" runs the very plumbing a dice card runs
+## rather than a stunted context that cannot reach the roller.
+func make_board_context(for_caster = null) -> BoardContext:
+	return HandBoardContext.new(
+			for_caster if for_caster != null else player, self, dice_roller, opponent)
+
+
 class HandBoardContext extends BoardContext:
 	var _deck_and_hand
 	var _dice
@@ -334,11 +344,10 @@ class HandBoardContext extends BoardContext:
 	# Delegate to the live roller. Without one (standalone harness) each falls
 	# back to BoardContext's placeholder warning, keeping the harness behaviour.
 
-	func reroll_die(die) -> void:
+	func reroll_die(die) -> bool:
 		if _dice == null:
-			super.reroll_die(die)
-			return
-		_dice.reroll_die_at(int(die))
+			return super.reroll_die(die)
+		return _dice.reroll_die_at(int(die))
 
 	func change_die_value(die_index : int, value : int, _target = null) -> void:
 		if _dice == null:
@@ -395,6 +404,49 @@ class HandBoardContext extends BoardContext:
 	# is rolling, so a chosen player is always the caster (bug 58 decision).
 	func choose_player():
 		return caster
+
+	## Pick one of `target`'s TRANSFERABLE tokens (bug 69's Tactical Advantage
+	## transfer). No new UI: the roller's modal button row already serves as a
+	## general chooser — tip_it picks increase/decrease through it.
+	func choose_status(target = null) -> String:
+		var who = target if target != null else caster
+		if _dice == null or who == null:
+			return await super.choose_status(target)
+		var ids : Array = []
+		var labels : Array = []
+		for token in who.status_effects.values():
+			if not token.transferable:
+				continue
+			ids.append(token.status_id)
+			labels.append("%s x%d" % [token.status_name, token.stacks])
+		if ids.is_empty():
+			return ""
+		var picked : int = await _dice.pick_option(labels)
+		return ids[picked] if picked >= 0 and picked < ids.size() else ""
+
+	# --- timing questions ----------------------------------------------------
+	# A token spend asks these to decide which of its options this moment can
+	# satisfy — the gating cards get from their data before they are ever played.
+
+	func has_live_roll() -> bool:
+		return _dice != null and _dice.has_live_roll()
+
+	## Move a whole token — stacks included — from one side to the other. Only
+	## the caster's own tokens can be given away (bug 69's push-only decision):
+	## ours is authoritative here, and the arrival is announced to the other
+	## client over the same path a card's effect takes.
+	func transfer_status(status_id : String, from_player, to_player) -> void:
+		if from_player == null or to_player == null or from_player != caster:
+			super.transfer_status(status_id, from_player, to_player)
+			return
+		var token : StatusEffect = from_player.get_status(status_id)
+		if token == null:
+			return
+		var stacks := token.stacks   # captured before the token leaves
+		from_player.clear_status(status_id)
+		if to_player == opponent and _announce_on_opponent(0, [status_id], [stacks]):
+			return
+		to_player.apply_status(status_id, stacks)
 
 	func choose_opponent_die() -> int:
 		if _dice == null:

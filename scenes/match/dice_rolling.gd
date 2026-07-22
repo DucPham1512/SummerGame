@@ -502,14 +502,16 @@ func copy_die(from_index : int, to_index : int) -> void:
 
 
 ## Reroll a single die to a fresh random face with the full toss (try_try_again,
-## and the owner side of helping_hand).
-func reroll_die_at(index : int) -> void:
+## and the owner side of helping_hand). Returns whether it happened — a refused
+## reroll must not cost the caller whatever it was paying with (bug 69).
+func reroll_die_at(index : int) -> bool:
 	# Bug 71: taxed like any other reroll of your dice; refused if unaffordable.
 	if reroll_gate.is_valid() and not reroll_gate.call():
-		return
+		return false
 	dice_result[index] = randi_range(1, SIDES)
 	dice[index].roll(dice_result[index])
 	_emit_modified()
+	return true
 
 
 ## A card granted another roll attempt (one_more_time / better_d): decrease the
