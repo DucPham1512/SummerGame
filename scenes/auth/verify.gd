@@ -15,6 +15,11 @@ func _on_verify_button_pressed() -> void:
 	var response_code: int = await GDSync.account_verify(email, verification_code.text, Util.login_session_time)
 	if response_code == ENUMS.ACCOUNT_VERIFICATION_RESPONSE_CODE.SUCCESS:
 		password = ""
+		# Verifying logs the account in, so this screen is a third way into the
+		# client and owes the same identity capture the login screen does —
+		# without it the nav bar greets a freshly registered player by no name.
+		Util.active_username = GDSync.player_get_username()
+		Util.active_email = email
 		verify.emit()
 	else:
 		match response_code:

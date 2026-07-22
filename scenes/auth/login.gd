@@ -21,6 +21,9 @@ func _ready() -> void:
 	var response_code: int = await GDSync.account_login_from_session(Util.login_session_time)
 	if response_code == ENUMS.ACCOUNT_LOGIN_RESPONSE_CODE.SUCCESS:
 		Util.active_username = GDSync.player_get_username()
+		# Nothing was typed on this path, so the email comes from GD-Sync's own
+		# saved login — the very value this session request was made with.
+		Util.active_email = Util.stored_login_email()
 		login.emit()
 
 
@@ -37,6 +40,7 @@ func _on_login_button_pressed() -> void:
 	
 	if response_code == ENUMS.ACCOUNT_LOGIN_RESPONSE_CODE.SUCCESS:
 		Util.active_username = GDSync.player_get_username()
+		Util.active_email = email.text
 		login.emit()
 	else:
 		match(response_code):
