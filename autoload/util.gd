@@ -2,8 +2,12 @@ extends Node
 
 var login_session_time: int = 86400   # default/fallback
 
-# Set by the login screen after a successful GD-Sync account login.
+# Set by the login/verify screens after a successful GD-Sync account login.
 var active_username : String = ""
+## The account's login email, shown as the player's identifier. Unlike
+## GDSync.get_client_id() — a per-connection handle that is a different number
+## every login — this is stable across sessions and devices.
+var active_email : String = ""
 
 # Matchmaking: base elo seeded at registration, and the widest elo gap two
 # players can be matched across.
@@ -37,6 +41,23 @@ func ensure_gdsync_connected() -> void:
 	GDSync.start_multiplayer()
 	await GDSync.connected
 	
+## The login email GD-Sync itself has on file, for the session-restore path —
+## there the player types nothing, so this is the only source. GD-Sync stores it
+## encrypted in user://GD-Sync/DataController.conf, reloads it at boot, and sends
+## it as part of the session login, so it is present whenever that login works.
+##
+## The public API never hands the email back (every `email` in MultiplayerClient
+## is an input), so this reads an addon-private member. That access is kept to
+## THIS function alone: if the addon reshapes its internals, one line breaks
+## rather than three, and an empty string is a survivable answer here.
+func stored_login_email() -> String:
+	var data_controller = GDSync.get("_data_controller")
+	if data_controller == null:
+		return ""
+	var email = data_controller.get("login_email")
+	return email if email is String else ""
+
+
 func load_config() -> void:
 	var file := FileAccess.open("res://config/game_config.json", FileAccess.READ)
 	if file == null:

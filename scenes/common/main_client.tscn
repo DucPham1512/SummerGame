@@ -92,7 +92,7 @@ size_flags_horizontal = 3
 texture_normal = ExtResource("2_85gpl")
 ignore_texture_size = true
 
-[node name="Label" type="Label" parent="NavigationBar" unique_id=1772870661]
+[node name="UsernameLabel" type="Label" parent="NavigationBar" unique_id=1772870661]
 layout_mode = 0
 offset_left = 96.0
 offset_top = 32.0
@@ -100,7 +100,7 @@ offset_right = 320.0
 offset_bottom = 56.0
 text = "Username"
 
-[node name="Label2" type="Label" parent="NavigationBar" unique_id=258151452]
+[node name="UserIdLabel" type="Label" parent="NavigationBar" unique_id=258151452]
 layout_mode = 0
 offset_left = 96.0
 offset_top = 56.0
