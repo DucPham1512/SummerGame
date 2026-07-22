@@ -682,8 +682,9 @@ func _on_own_token_pressed(token : StatusEffect) -> void:
 	spend_popup.open(token, ctx)
 
 
-# Token spends mutate stacks directly (no combatant signal), so sweep any that
-# depleted and let the row rebuild once the popup closes.
+# Backstop. Spends announce their own stack changes now (bug 81), so the row and
+# the netcode are already current by the time the popup closes; this just sweeps
+# anything a spend left at 0 without going through the token.
 func _on_spend_popup_closed() -> void:
 	for status_id in player.status_effects.keys():
 		player.remove_status_stacks(status_id, 0)   # 0-removal just runs the purge
@@ -828,8 +829,8 @@ func _on_skill_chosen(skill : Skill) -> void:
 	# Limit changes and max-outs must work from an empty board too (Higher
 	# Ground grants max TA whether or not the player already holds any):
 	# create the token at 0 stacks when it's missing.
-	# These go straight at the token, bypassing apply_status — so each one has
-	# to announce itself or the token row and the netcode never hear about it.
+	# A stack_limit change goes straight at the token and is not a stack count,
+	# so nothing announces it — this one has to say so itself.
 	for status_id in skill_effect.stack_limit_delta:
 		var token : StatusEffect = player.get_status(status_id)
 		if token == null:
@@ -840,8 +841,7 @@ func _on_skill_chosen(skill : Skill) -> void:
 		var token : StatusEffect = player.get_status(status_id)
 		if token == null:
 			token = player.apply_status(status_id, 0)
-		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit
-		player.notify_status_changed(token)
+		token.add_stacks(token.stack_limit)   # clamps to the (raised) limit, announces itself
 	# Character-specific offensive modifiers (bug 61): the active player's board
 	# transforms the outgoing skill effect (the huntress's Nyra adds +2 damage
 	# while active; the tactician no-ops). Offense-only — this handler bails to

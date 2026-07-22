@@ -50,19 +50,35 @@ func change_health(delta : int) -> void:
 func apply_status(status_id : String, stack_count : int = 1) -> StatusEffect:
 	var token : StatusEffect = status_effects.get(status_id)
 	if token != null:
-		if token.add_stacks(stack_count) != 0:
-			status_changed.emit(token)
+		token.add_stacks(stack_count)   # the token announces the move itself
 		return token
 	token = StatusEffect.create(status_id, stack_count)
 	status_effects[status_id] = token
+	# Adopt only once it's on the board, and before announcing it: the token's
+	# starting stacks were set in its constructor and must not read as a change.
+	token.owner_combatant = self
 	status_applied.emit(token)
 	return token
 
 
-## Re-announces a token the caller mutated DIRECTLY — runtime stack-limit
-## changes and max-outs (Higher Ground) go straight at the token and so bypass
-## apply_status's signals. Callers doing that must announce it, or the UI and
-## the netcode never hear about it.
+## A token told us its stack count moved (StatusEffect._announce). A count that
+## hit 0 retires the token then and there, so has_status() never reports a spent
+## one — the end-of-tick _purge_depleted sweeps are now just a backstop. Erasing
+## before emitting matters: listeners (match_sync's broadcast) re-read
+## status_effects and must see the post-removal truth.
+func on_token_stacks_changed(token : StatusEffect) -> void:
+	if not token.is_depleted():
+		status_changed.emit(token)
+		return
+	if status_effects.get(token.status_id) == token:
+		status_effects.erase(token.status_id)
+	status_removed.emit(token)
+	token.owner_combatant = null
+
+
+## Re-announces a token the caller mutated DIRECTLY. Stack COUNTS announce
+## themselves; this is for the rest — runtime stack_limit changes (Higher
+## Ground) go straight at the token and nothing else would hear about them.
 func notify_status_changed(token : StatusEffect) -> void:
 	status_changed.emit(token)
 
@@ -80,8 +96,7 @@ func remove_status_stacks(status_id : String, stack_count : int = 1) -> void:
 	var token : StatusEffect = status_effects.get(status_id)
 	if token == null:
 		return
-	if token.remove_stacks(stack_count) != 0:
-		status_changed.emit(token)
+	token.remove_stacks(stack_count)   # the token announces the move (and its own retirement)
 	_purge_depleted()
 
 
@@ -92,6 +107,7 @@ func clear_status(status_id : String) -> void:
 		return
 	status_effects.erase(status_id)
 	status_removed.emit(token)
+	token.owner_combatant = null   # off the board: it can't announce onto us any more
 
 
 ## Upkeep tick: triggers the on_upkeep hook of every token that DECLARES upkeep
@@ -130,11 +146,13 @@ func run_roll_phase_end(ctx : BoardContext) -> void:
 	_purge_depleted()
 
 
-# Tokens shed stacks themselves (bleed's 5-6, protect's spend), so depletion is
-# swept here rather than trusted to every code path that touches stacks.
+# Backstop. A token that empties itself now retires on the spot (see
+# on_token_stacks_changed), so this normally finds nothing — it still catches
+# tokens created empty and never touched since.
 func _purge_depleted() -> void:
 	for status_id in status_effects.keys():
 		var token : StatusEffect = status_effects[status_id]
 		if token.is_depleted():
 			status_effects.erase(status_id)
 			status_removed.emit(token)
+			token.owner_combatant = null
