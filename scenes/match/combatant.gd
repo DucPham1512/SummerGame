@@ -37,9 +37,27 @@ var status_effects : Dictionary = {}
 
 ## Direct health delta for resolution code and tests. Player/Opponent layer
 ## their label updates on top through their own wrapper methods.
+##
+## Every hit this side takes passes through here, so mitigation belongs here
+## rather than at the half-dozen call sites that deal damage (bug 79). Healing
+## is left alone — only a negative delta is "incoming damage".
 func change_health(delta : int) -> void:
+	if delta < 0:
+		delta = -absorb_incoming_damage(-delta)
 	health = clampi(health + delta, 0, max_hp)
 	health_changed.emit(health)
+
+
+## Runs `amount` past every token this side holds and returns what actually
+## lands. Tokens that mitigate (an armed Protect) pay their own cost inside
+## mitigate_damage, since only they know whether they fired. Iterating values()
+## copies, so a token retiring itself mid-walk is safe.
+func absorb_incoming_damage(amount : int) -> int:
+	for token in status_effects.values():
+		if amount <= 0:
+			break
+		amount = token.mitigate_damage(amount)
+	return maxi(amount, 0)
 
 
 # --- status effects -----------------------------------------------------------
