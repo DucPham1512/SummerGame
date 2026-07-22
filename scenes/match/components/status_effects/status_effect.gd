@@ -126,6 +126,21 @@ func can_spend() -> bool:
 	return false
 
 
+## Damage mitigation: the owner runs every incoming hit past each token it holds,
+## and each returns what survives (bug 79 — an armed Protect halves it). Tokens
+## that mitigate pay their own cost here, since only they know whether they fired.
+## The base is transparent, so a token that does not mitigate needs no wiring.
+func mitigate_damage(amount : int) -> int:
+	return amount
+
+
+## A short marker appended to the token's pill, for state the stack count can't
+## show — an armed Protect looks identical to an idle one otherwise. "" for the
+## tokens that carry no such state.
+func pill_suffix() -> String:
+	return ""
+
+
 ## Spend the token by composing board verbs. Returns true if it was spent.
 ## When the match resolves a status, ctx.caster is the token's owner.
 func spend(_ctx : BoardContext) -> bool:

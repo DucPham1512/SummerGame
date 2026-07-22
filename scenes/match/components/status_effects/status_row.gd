@@ -48,7 +48,9 @@ func _rebuild() -> void:
 
 func _build_pill(token : StatusEffect) -> Button:
 	var pill := Button.new()
-	pill.text = "x%d" % token.stacks
+	# The suffix carries state the stack count can't show — an armed Protect
+	# would otherwise look exactly like an idle one.
+	pill.text = "x%d%s" % [token.stacks, token.pill_suffix()]
 	var icon : Texture2D = token.picture_panel
 	if icon == null:
 		# Art pending for most statuses — a placeholder still reads as a token.
