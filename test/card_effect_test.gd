@@ -312,8 +312,9 @@ class CardTestContext extends BoardContext:
 		test._log("choose_option(%s) -> 0 (option picker pending)" % [options])
 		return 0
 
-	func reroll_die(die) -> void:
+	func reroll_die(die) -> bool:
 		test._log("reroll_die(#%s) — dice session hookup pending" % die)
+		return true
 
 	func change_die_value(die_index : int, value : int, _target = null) -> void:
 		test._log("change_die_value(#%d -> %d) — dice session hookup pending" % [die_index, value])

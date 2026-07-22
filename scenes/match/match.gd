@@ -675,9 +675,10 @@ func _offer_damage_transfer(defender : Combatant) -> void:
 # --- spending our own tokens (bug 60: Nyra's Bond heal any time; also TA) --------
 
 func _on_own_token_pressed(token : StatusEffect) -> void:
-	var ctx := MatchSpendContext.new(self)
-	ctx.caster = player
-	ctx.opponent = opponent
+	# The same context an instant-action card resolves through (bug 69): a token
+	# spendable "at any time" needs the dice session and the opponent-announce
+	# path just as much as a card does.
+	var ctx : BoardContext = deck_and_hand.make_board_context(player)
 	ctx.incoming_damage = 0   # spending outside a defence: no damage to split
 	spend_popup.open(token, ctx)
 
@@ -688,21 +689,6 @@ func _on_own_token_pressed(token : StatusEffect) -> void:
 func _on_spend_popup_closed() -> void:
 	for status_id in player.status_effects.keys():
 		player.remove_status_stacks(status_id, 0)   # 0-removal just runs the purge
-
-
-# Board verbs a token spend needs, wired to this match's player/deck. Nyra's
-# Bond's heal acts on the companion directly (no verb); TA spends use these.
-class MatchSpendContext extends BoardContext:
-	var _match
-	func _init(m) -> void:
-		_match = m
-	func gain_cp(amount : int) -> void:
-		(_match.player as Player).update_player_cp(amount)
-	func draw_cards(amount : int) -> void:
-		await _match.deck_and_hand.draw_cards(amount)
-	func apply_status(status_id : String, stacks : int = 1, target = null) -> void:
-		var who = target if target != null else caster
-		who.apply_status(status_id, stacks)
 
 
 # The announced attack's target-requiring effects land on the defender —

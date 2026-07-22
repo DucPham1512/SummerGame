@@ -57,9 +57,13 @@ func _on_option_pressed(option : Dictionary) -> void:
 		_open_split_stage(option)
 		return
 	var action : Callable = option.get("action", Callable())
+	# Close BEFORE running it: an interactive spend (Tactical Advantage's die
+	# re-roll and status transfer, bug 69) opens its own picker over the board,
+	# and this panel would sit on top of it. The others are synchronous, so the
+	# order makes no difference to them.
+	close()
 	if action.is_valid():
 		action.call()
-	close()
 
 
 # Stage 2 for damage-split spends: one slider divides `damage` between the

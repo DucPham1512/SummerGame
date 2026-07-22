@@ -62,8 +62,12 @@ func prevent_damage(amount: int, target = null) -> void:
 
 # --- dice-session verbs (the roll UI hookup implements these) -----------------
 
-func reroll_die(die) -> void:
+## Returns whether the die was actually rerolled: a reroll surcharge (Constrict,
+## bug 71) can refuse it, and a caller paying for the reroll with something of its
+## own — a Tactical Advantage stack — must not spend that when nothing happened.
+func reroll_die(die) -> bool:
 	_todo("reroll_die(%s)" % die)
+	return false
 
 func change_die_value(die_index: int, value: int, target = null) -> void:
 	_todo("change_die_value(#%d -> %d, %s)" % [die_index, value, target])
@@ -76,6 +80,19 @@ func copy_die_value(from_index: int, to_index: int, target = null) -> void:
 
 func grant_extra_roll(target = null) -> void:
 	_todo("grant_extra_roll(%s)" % target)
+
+# --- timing questions -------------------------------------------------------------
+# What a resolution may ask about the moment it is resolving in. Cards get this
+# gating from their data (Card.roll_need, TurnManager.can_play) before they are
+# ever played; a status token spend has no such wrapper — it decides for itself
+# which of its options the moment can satisfy — so it asks here (bug 69).
+#
+# Note there is no "is it my turn" question: tokens spendable at any time are
+# instant actions, so whose turn it is never gates them.
+
+## Whether the caster has a roll on the table right now to act on.
+func has_live_roll() -> bool:
+	return false
 
 # helping_hand: pick one of the OPPONENT's dice (their roll replicated to us) and
 # force them to reroll it on their own client. Split from choose_die/reroll_die —
@@ -135,8 +152,13 @@ func choose_player():
 	_todo("choose_player()")
 	return null
 
+## Pick one of `target`'s status tokens; "" when there is nothing to pick.
+## A coroutine for the reason spelled out above — the real override awaits a
+## picker, so a base that did not yield would have callers' `await` compiled
+## away and hand them the coroutine object instead of the id (bug 72).
 func choose_status(target = null) -> String:
 	_todo("choose_status(%s)" % target)
+	await _suspend()
 	return ""
 
 func choose_die(target = null) -> int:
