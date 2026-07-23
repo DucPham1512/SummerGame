@@ -125,6 +125,13 @@ func add_attack_status(status_id: String, stacks: int = 1) -> void:
 func upgrade_skill(slot_index: int) -> void:
 	_todo("upgrade_skill(slot %d)" % slot_index)
 
+## Advances the caster's slot `slot_index` straight to `target_stage`, so a
+## tier-III card lands on III whether or not the II was played (bug 80). Forward-
+## only in the layout; the increment upgrade_skill above stays for single-tier
+## cards.
+func upgrade_skill_to(slot_index: int, target_stage: int) -> void:
+	_todo("upgrade_skill_to(slot %d -> stage %d)" % [slot_index, target_stage])
+
 # Value-returning / interactive verbs. In the real context these are coroutines
 # (await a roll animation or a player's pick); the placeholders return defaults so
 # they can be called without a Board.

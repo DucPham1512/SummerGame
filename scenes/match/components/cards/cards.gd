@@ -277,3 +277,38 @@ func roll_need() -> RollNeed:
 ## an attack ability has been chosen, and its effects ride that attack.
 func is_attack_modifier() -> bool:
 	return false
+
+
+## The CP actually charged to play this card, given the caster's own skill layout.
+## Flat for ordinary cards; a tier-III upgrade refunds its predecessor once that
+## predecessor is in play (bug 80). A null layout (the harness) keeps the printed
+## cost.
+func effective_cp_cost(_skill_layout) -> int:
+	return cp_cost
+
+
+## Whether the caster's skill layout permits this card right now. Only upgrade
+## cards ever say no — when their slot has already reached the tier they grant, so
+## an upgrade can't be re-bought and II can't be played once III is in play
+## (bug 80). Ordinary cards, and the null-layout harness, are always allowed.
+func layout_allows_play(_skill_layout) -> bool:
+	return true
+
+
+# --- shared by the tiered-upgrade cards (bug 80) -----------------------------------
+
+## Cost for a staged upgrade that refunds its predecessor once that predecessor is
+## in play. The slot having advanced past its base stage IS "the previous tier has
+## been played". The refund is the predecessor's own price, read from data rather
+## than hardcoded; never below 0.
+func _tiered_upgrade_cost(skill_layout, slot_index : int, prev_card_id : String) -> int:
+	if skill_layout == null or skill_layout.stage_of(slot_index) < 1:
+		return cp_cost
+	var prev_cost : int = int(card_repo.get(prev_card_id, {}).get("cp_cost", 0))
+	return maxi(cp_cost - prev_cost, 0)
+
+
+## Whether an upgrade to `target_stage` would still advance slot `slot_index` —
+## false once the slot has already reached (or passed) that tier.
+func _upgrade_available(skill_layout, slot_index : int, target_stage : int) -> bool:
+	return skill_layout == null or skill_layout.stage_of(slot_index) < target_stage
