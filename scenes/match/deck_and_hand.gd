@@ -161,6 +161,10 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 	# Phase gate: outside a legal window the card just glides back.
 	if turn_manager != null and not turn_manager.can_play(player, card.phase, card.phase_subtype):
 		return
+	# Skill-state gate (bug 80): an upgrade already at or past its tier glides back,
+	# so an upgrade can't be re-bought and II can't be played once III is in play.
+	if not card.layout_allows_play(skill_layout):
+		return
 	# An attack modifier improves an attack you have already declared, so it is only
 	# legal once an attack ability is on the table. Otherwise it glides back unspent.
 	if card.is_attack_modifier() and attack_modifier_gate.is_valid() \
@@ -177,16 +181,18 @@ func _on_card_released(card : Card, drop_global_position : Vector2) -> void:
 			if dice_roller == null or not dice_roller.has_spectated_roll():
 				return
 	# Rules 1.3: playing an action card pays its CP cost; unaffordable cards
-	# glide back.
-	if player != null and player.cp < card.cp_cost:
+	# glide back. A tier-III upgrade discounts once its II is in play (bug 80), so
+	# the gate and the charge both use the effective cost, not the printed one.
+	var cost : int = card.effective_cp_cost(skill_layout)
+	if player != null and player.cp < cost:
 		return
 	var slot : int = hand.get_card_index(card)   # before the fan closes the gap
 	card.consume()          # suppress the glide-back
 	hand.play_card(card)    # out of the fan; this scene owns the node now
 	card.hide()             # gone visually at once; freed after resolution
-	if player != null and card.cp_cost > 0:
-		player.update_player_cp(-card.cp_cost)
-		print("[cards] paid %d CP for %s (cp now %d)" % [card.cp_cost, card.card_id, player.cp])
+	if player != null and cost > 0:
+		player.update_player_cp(-cost)
+		print("[cards] paid %d CP for %s (cp now %d)" % [cost, card.card_id, player.cp])
 	card_played.emit(slot, card.card_id)
 	# Static analysis sees the base (non-coroutine) resolve, but overrides may
 	# await board verbs — the await keeps the card alive until they finish.
@@ -339,6 +345,12 @@ class HandBoardContext extends BoardContext:
 			super.upgrade_skill(slot_index)   # harness warning
 			return
 		_deck_and_hand.skill_layout.upgrade_slot(slot_index)
+
+	func upgrade_skill_to(slot_index : int, target_stage : int) -> void:
+		if _deck_and_hand.skill_layout == null:
+			super.upgrade_skill_to(slot_index, target_stage)   # harness warning
+			return
+		_deck_and_hand.skill_layout.upgrade_slot_to(slot_index, target_stage)
 
 	# --- dice-session verbs (bug 58) -----------------------------------------
 	# Delegate to the live roller. Without one (standalone harness) each falls

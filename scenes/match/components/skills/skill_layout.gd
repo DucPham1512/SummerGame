@@ -136,6 +136,33 @@ func upgrade_slot(index : int) -> bool:
 	return true
 
 
+## The current kit stage of slot `index` (0 = base loadout). Out-of-range slots
+## read 0 — i.e. un-upgraded. Lets cards ask "has this chain been upgraded yet"
+## without reaching into slot_stage (bug 80).
+func stage_of(index : int) -> int:
+	return slot_stage[index] if index >= 0 and index < slot_stage.size() else 0
+
+
+## Advances slot `index` STRAIGHT to `target_stage`, rebuilding it with that
+## stage's skills — a tier-III card must reach III whether or not the II was ever
+## played (bug 80). Forward-only (never downgrades) and clamped to the slot's
+## final stage. Returns whether the stage actually moved.
+func upgrade_slot_to(index : int, target_stage : int) -> bool:
+	var slots : Array = _kit().get("slots", [])
+	if index < 0 or index >= mini(slots.size(), slot_stage.size()):
+		return false
+	var stages : Array = slots[index].get("stages", [])
+	if stages.is_empty():
+		return false
+	target_stage = mini(target_stage, stages.size() - 1)
+	if target_stage <= slot_stage[index]:
+		return false
+	slot_stage[index] = target_stage
+	_fill_slot(index, stages[target_stage])
+	print("[skills] slot %d set to stage %d: %s" % [index + 1, target_stage, stages[target_stage]])
+	return true
+
+
 ## Whether slot `index` still has an upgrade stage left.
 func has_upgrade(index : int) -> bool:
 	var slots : Array = _kit().get("slots", [])

@@ -1,14 +1,20 @@
 class_name CardHuntressMaternalBondII
 extends Card
 
-# Huntress — "Maternal Bond II": upgrade slot 7 (Maternal Bond, defensive)
-# to its stage 1.
+# Huntress — "Maternal Bond II": upgrade slot 7 (Maternal Bond, defensive) to
+# tier II. Not playable once the slot has already reached II or III (bug 80: no
+# re-buying an upgrade, and no playing II after III).
 
-const SLOT_INDEX := 7   # Maternal Bond
+const SLOT_INDEX := 7    # Maternal Bond
+const TARGET_STAGE := 1  # II
 
 
 func _init() -> void:
 	card_id = "huntress_maternal_bond_ii"
+
+
+func layout_allows_play(skill_layout) -> bool:
+	return _upgrade_available(skill_layout, SLOT_INDEX, TARGET_STAGE)
 
 
 func resolve(ctx : BoardContext) -> void:
