@@ -134,6 +134,14 @@ func mitigate_damage(amount : int) -> int:
 	return amount
 
 
+## Extra damage a declared attack against this token's HOLDER deals (bug 70 —
+## Targeted's +2). The inverse of mitigate_damage: read as the attack is put on
+## the table, before the defensive phase, so the bonus stays defendable. 0 for
+## tokens that do not amplify.
+func attack_damage_bonus() -> int:
+	return 0
+
+
 ## A short marker appended to the token's pill, for state the stack count can't
 ## show — an armed Protect looks identical to an idle one otherwise. "" for the
 ## tokens that carry no such state.
