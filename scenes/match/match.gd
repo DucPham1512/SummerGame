@@ -27,6 +27,7 @@ const RESULT_SETTLE := 0.3
 @onready var match_sync : MatchSync = $MatchSync
 @onready var spend_popup : StatusSpendPopup = $StatusSpendPopup
 @onready var player_status_row : StatusRow = $Player/PlayerResourceContainer/StatusRow
+@onready var damage_counter : DamageCounter = $DamageCounter
 
 ## The recorded result of this turn's offensive roll (raw face values).
 var offensive_roll : Array[int] = []
@@ -248,6 +249,7 @@ func _on_turn_started(active : Combatant) -> void:
 	_outgoing_attack = null      # no attack declared and awaiting modifiers
 	_upkeep_awaiting_confirm = false   # no upkeep of ours is mid-resolution
 	_upkeep_rolling = false
+	_refresh_incoming_damage()   # a fresh turn: the incoming-damage readout resets to 0
 
 
 func _on_phase_entered(active : Combatant, phase : TurnManager.Phase) -> void:
@@ -632,6 +634,7 @@ func _on_defense_activated(skill : Skill) -> void:
 		_pending_attack.damage = maxi(before - defense.prevent_damage, 0)
 		print("[skills] defense prevented %d damage (%d -> %d)" % [
 				defense.prevent_damage, before, _pending_attack.damage])
+		_refresh_incoming_damage()   # prevention shaved the incoming attack
 	# Bug 60: the huntress may send the landing damage to Nyra (or split it).
 	await _offer_damage_transfer(defender)
 	_resolve_pending_attack()
@@ -668,6 +671,7 @@ func _offer_damage_transfer(defender : Combatant) -> void:
 	if used_bond:
 		player.remove_status_stacks("nyras_bond", 1)
 	_pending_attack.damage = 0
+	_refresh_incoming_damage()   # damage routed to Nyra: none of it is incoming any more
 	print("[match] damage transfer: you %d / %s %d%s" % [
 			player_share, nyra.companion_name, nyra_share, " (Bond)" if used_bond else ""])
 
@@ -706,6 +710,7 @@ func _resolve_pending_attack() -> void:
 		else:
 			(opponent as Opponent).on_opponent_health(opponent.health - _pending_attack.damage)
 	_pending_attack = null
+	_refresh_incoming_damage()   # the attack has landed: nothing incoming now
 
 
 # Who a declared attack lands on: the side that is NOT taking the turn. Both the
@@ -731,6 +736,29 @@ func _amplify_attack_for_defender(effect : SkillEffect, defender : Combatant) ->
 	effect.damage += bonus
 
 
+# --- incoming-damage readout (PBI 89) --------------------------------------------
+# A central label showing the current declared attack's damage against whoever is
+# defending this turn, so a player can read the threat as it is built and defended.
+
+# The attack in flight against the defender: whichever of the declared
+# (_outgoing_attack) or on-the-table (_pending_attack) attack exists. Pending wins —
+# an attack only ever moves outgoing -> pending, never both at once. 0 when none.
+func _current_incoming_attack() -> int:
+	if _pending_attack != null:
+		return _pending_attack.damage
+	if _outgoing_attack != null:
+		return _outgoing_attack.damage
+	return 0
+
+
+# Push the live total to the central readout. Called wherever the attack's damage is
+# set, modified, cleared or resolved, so the number tracks the turn and resets to 0
+# between turns. The label reads "Damage dealt" on our own turn and "Incoming damage"
+# on the opponent's, keyed off who is active.
+func _refresh_incoming_damage() -> void:
+	damage_counter.show_damage(_current_incoming_attack(), turn_manager.active == player)
+
+
 # --- networked combat resolution (multiplayer) ------------------------------------
 # The attack is computed on the attacker's client but resolved on the
 # DEFENDER's — each client stays authoritative over its own HP, and the
@@ -752,6 +780,7 @@ func receive_incoming_attack(damage : int, undefendable : bool, status_ids : Arr
 	# defended against. The attacker announced its raw damage.
 	_amplify_attack_for_defender(effect, _attack_defender())
 	_pending_attack = effect
+	_refresh_incoming_damage()   # an attack is on the table against us
 	print("[match] incoming attack announced: %d damage, %d status(es)" % [damage, status_ids.size()])
 
 
@@ -870,6 +899,7 @@ func _on_skill_chosen(skill : Skill) -> void:
 	var attack_out := skill_effect.damage > 0 or not skill_effect.inflict_on_opponent.is_empty()
 	if attack_out:
 		_outgoing_attack = skill_effect
+		_refresh_incoming_damage()   # an attack is declared against the defender
 	var self_ids : Array[String] = []
 	for status in skill_effect.grant_to_self:
 		self_ids.append("%s x%d" % [status.status_id, status.stacks])
@@ -920,6 +950,9 @@ func _dispatch_outgoing_attack() -> void:
 	print("[skills] attack sent: %d damage%s, %d status(es)" % [
 			effect.damage, " (undefendable)" if effect.undefendable else "",
 			effect.inflict_on_opponent.size()])
+	# Solo now holds the amplified pending attack; the MP attacker has handed it off
+	# and holds nothing, so its readout drops to 0.
+	_refresh_incoming_damage()
 
 
 # A modifier card resolved: fold it into the declared attack. Only the numbers
@@ -935,6 +968,7 @@ func _on_attack_modifier_added(damage : int, status_ids : Array, status_stacks :
 				StatusEffect.new(status_ids[i], int(status_stacks[i])))
 	print("[cards] attack modifier: +%d damage, %d status(es) -> attack now %d" % [
 			damage, status_ids.size(), _outgoing_attack.damage])
+	_refresh_incoming_damage()   # Pounce / Prowl grew the declared attack
 
 
 # Whether an attack modifier may be played right now: our own declared attack is

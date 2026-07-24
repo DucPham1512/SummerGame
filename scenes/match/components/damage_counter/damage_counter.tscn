@@ -1,0 +1,13 @@
+[gd_scene load_steps=2 format=3 uid="uid://bdmgcounter0089"]
+
+[ext_resource type="Script" uid="uid://cdmgcounter0089" path="res://scenes/match/components/damage_counter/damage_counter.gd" id="1_dmgc"]
+
+[node name="DamageCounter" type="Label"]
+offset_right = 360.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Incoming damage: 0"
+script = ExtResource("1_dmgc")
