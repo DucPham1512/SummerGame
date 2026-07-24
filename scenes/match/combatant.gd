@@ -60,6 +60,26 @@ func absorb_incoming_damage(amount : int) -> int:
 	return maxi(amount, 0)
 
 
+## Extra damage a declared attack against this side deals, from tokens that
+## amplify it (Targeted, bug 70). `incoming` are the tokens that same attack is
+## about to inflict: they count too, because an attack applies its statuses
+## before its damage resolves, so an ability that inflicts Targeted and deals
+## damage boosts its own hit. Counted once per id, so a token already held is
+## not double-counted by an incoming copy of itself.
+func incoming_attack_bonus(incoming : Array = []) -> int:
+	var bonus := 0
+	var counted : Dictionary = {}
+	for token in status_effects.values():
+		bonus += token.attack_damage_bonus()
+		counted[token.status_id] = true
+	for status in incoming:
+		if counted.has(status.status_id):
+			continue
+		counted[status.status_id] = true
+		bonus += StatusEffect.create(status.status_id, status.stacks).attack_damage_bonus()
+	return bonus
+
+
 # --- status effects -----------------------------------------------------------
 
 ## Inflicts `stack_count` stacks of a status on this combatant: merges into the

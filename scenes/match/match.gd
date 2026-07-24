@@ -697,7 +697,7 @@ func _on_spend_popup_closed() -> void:
 func _resolve_pending_attack() -> void:
 	if _pending_attack == null:
 		return
-	var defender : Combatant = opponent if turn_manager.active == player else player
+	var defender : Combatant = _attack_defender()
 	for status in _pending_attack.inflict_on_opponent:
 		defender.apply_status(status.status_id, status.stacks)
 	if _pending_attack.damage > 0:
@@ -706,6 +706,29 @@ func _resolve_pending_attack() -> void:
 		else:
 			(opponent as Opponent).on_opponent_health(opponent.health - _pending_attack.damage)
 	_pending_attack = null
+
+
+# Who a declared attack lands on: the side that is NOT taking the turn. Both the
+# resolution above and the Targeted amplification below derive it the same way.
+func _attack_defender() -> Combatant:
+	return opponent if turn_manager.active == player else player
+
+
+## Targeted (bug 70): a declared attack against a token holder lands harder.
+## Applied as the attack hits the table — BEFORE the defensive phase — so the
+## bonus is defendable, as the Tactician's description requires. The attack's OWN
+## inflictions count, since an attack applies its statuses before its damage
+## resolves (Higher Ground inflicts Targeted and boosts its own hit). Only
+## declared attacks reach here: counter damage, card effects and Upkeep ticks are
+## other paths and stay unboosted.
+func _amplify_attack_for_defender(effect : SkillEffect, defender : Combatant) -> void:
+	if effect == null or defender == null or effect.damage <= 0:
+		return
+	var bonus : int = defender.incoming_attack_bonus(effect.inflict_on_opponent)
+	if bonus <= 0:
+		return
+	print("[match] Targeted: attack amplified %d -> %d" % [effect.damage, effect.damage + bonus])
+	effect.damage += bonus
 
 
 # --- networked combat resolution (multiplayer) ------------------------------------
@@ -724,6 +747,10 @@ func receive_incoming_attack(damage : int, undefendable : bool, status_ids : Arr
 	effect.undefendable = undefendable
 	for i in status_ids.size():
 		effect.inflict_on_opponent.append(StatusEffect.new(status_ids[i], int(status_stacks[i])))
+	# We are the defender here and own our tokens authoritatively, so the Targeted
+	# bonus is computed on this client — before the defensive phase, so it can be
+	# defended against. The attacker announced its raw damage.
+	_amplify_attack_for_defender(effect, _attack_defender())
 	_pending_attack = effect
 	print("[match] incoming attack announced: %d damage, %d status(es)" % [damage, status_ids.size()])
 
@@ -877,6 +904,10 @@ func _dispatch_outgoing_attack() -> void:
 	var effect := _outgoing_attack
 	_outgoing_attack = null
 	if _is_solo():
+		# Solo runs both sides here, so the amplification happens on this path.
+		# Multiplayer announces raw damage instead and the DEFENDER amplifies it
+		# in receive_incoming_attack — so the bonus is only ever applied once.
+		_amplify_attack_for_defender(effect, _attack_defender())
 		_pending_attack = effect
 	else:
 		_awaiting_defense = true
